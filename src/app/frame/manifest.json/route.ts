@@ -1,7 +1,8 @@
-// src/app/frame/manifest.json/route.ts
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
-export function GET() {
+export const dynamic = "force-dynamic";
+
+export async function GET() {
   return NextResponse.json({
     name: "Tip Button Mini App",
     description: "Prototype tipping mini app for developers",
