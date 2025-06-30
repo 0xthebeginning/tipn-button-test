@@ -19,6 +19,14 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function Home() {
-  return (<App />);
+// app/page.tsx
+import SampleDisplay from "../components/SampleDisplay";
+
+export default function Page() {
+  return (
+    <main className="min-h-screen bg-gray-100">
+      <SampleDisplay />
+    </main>
+  );
 }
+

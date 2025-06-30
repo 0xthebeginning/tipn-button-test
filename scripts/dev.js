@@ -84,7 +84,7 @@ async function startDev() {
   let miniAppUrl;
 
   if (useTunnel) {
-    // Start localtunnel and get URL
+/*     // Start localtunnel and get URL
     tunnel = await localtunnel({ port: 3000 });
     let ip;
     try {
@@ -115,7 +115,7 @@ async function startDev() {
    2. Go to Settings > Developer > Mini Apps
    4. Enter this URL: ${tunnel.url}
    5. Click "Preview" (note that it may take ~10 seconds to load)
-`);
+`);*/
   } else {
     miniAppUrl = 'http://localhost:3000';
     console.log(`

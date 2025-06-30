@@ -1,27 +1,21 @@
+// src/app/layout.tsx
 import type { Metadata } from "next";
-
-import { getSession } from "~/auth"
 import "~/app/globals.css";
-import { Providers } from "~/app/providers";
-import { APP_NAME, APP_DESCRIPTION } from "~/lib/constants";
+import ClientWrapper from "./client-wrapper"; // import client component for UI logic
 
 export const metadata: Metadata = {
-  title: APP_NAME,
-  description: APP_DESCRIPTION,
+  title: "Prototyping",
+  description: "My Farcaster Mini App",
 };
 
-export default async function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {  
-  const session = await getSession()
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <Providers session={session}>{children}</Providers>
+        <ClientWrapper>{children}</ClientWrapper>
       </body>
     </html>
   );
 }
+
+
