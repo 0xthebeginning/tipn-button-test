@@ -35,7 +35,7 @@ useEffect(() => {
     console.log("🔎 Exploring context keys:");
     logDeep(context);
   }
-}, [isSDKLoaded, context]);
+}, [isSDKLoaded, context, logDeep]);
 
   useEffect(() => {
     if (isSDKLoaded) {
@@ -75,7 +75,7 @@ useEffect(() => {
         </p>
       )}
 
-      <h3 className="text-black font-semibold mt-4 mb-2">Press button to "Like"(Tip) from user to trigger TIPN sensing webhook(Assuming user is tipping with TIPN)</h3>
+      <h3 className="text-black font-semibold mt-4 mb-2">Press button to Like(Tip) from user to trigger TIPN sensing webhook(Assuming user is tipping with TIPN)</h3>
         <button
         onClick={handleTip}
         className="mt-4 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
