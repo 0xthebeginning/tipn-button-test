@@ -18,12 +18,12 @@ export default function SampleDisplay() {
   }
 }, [isSDKLoaded, context]);
 
-function logDeep(obj: Record<string, any>, prefix = "") {
+function logDeep(obj: Record<string, unknown>, prefix = "") {
   for (const key in obj) {
     const value = obj[key];
     const path = prefix ? `${prefix}.${key}` : key;
     if (typeof value === "object" && value !== null) {
-      logDeep(value as Record<string, any>, path);
+      logDeep(value as Record<string, unknown>, path);
     } else {
       console.log(`${path}:`, value);
     }
@@ -71,10 +71,9 @@ useEffect(() => {
         <p className="text-black">{message}</p>
       ) : (
         <p className="text-black">
-          {!isSDKLoaded ? "Initializing session…" : "Loading your ID…"}
+        {!isSDKLoaded ? 'Initializing session…' : 'Loading your ID…'}
         </p>
       )}
-
 
       <h3 className="text-black font-semibold mt-4 mb-2">Press button to "Like"(Tip) from user to trigger TIPN sensing webhook(Assuming user is tipping with TIPN)</h3>
         <button
