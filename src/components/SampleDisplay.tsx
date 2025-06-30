@@ -18,12 +18,12 @@ export default function SampleDisplay() {
   }
 }, [isSDKLoaded, context]);
 
-function logDeep(obj: any, prefix = "") {
+function logDeep(obj: Record<string, any>, prefix = "") {
   for (const key in obj) {
     const value = obj[key];
     const path = prefix ? `${prefix}.${key}` : key;
     if (typeof value === "object" && value !== null) {
-      logDeep(value, path);
+      logDeep(value as Record<string, any>, path);
     } else {
       console.log(`${path}:`, value);
     }
