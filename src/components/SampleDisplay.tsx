@@ -28,10 +28,10 @@ export default function SampleDisplay() {
         if (!res.ok) throw new Error(`API error: ${res.status}`);
 
         const data = await res.json();
-        if (data?.result?.casts) {
-          setDevCasts(data.result.casts);
+        if (data?.casts) {
+          setDevCasts(data.casts);
           setDebugMessages(prev => [
-            `Fetched ${data.result.casts.length} dev casts.`,
+            `Fetched ${data.casts.length} dev casts.`,
             ...prev,
           ]);
         } else {
