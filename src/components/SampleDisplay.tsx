@@ -5,7 +5,9 @@ import { useEffect, useState } from "react";
 const DEVELOPER_FID = 1083400;
 
 type Like = { fid: number };
+
 type Cast = {
+  hash: string;
   text: string;
   reactions?: {
     likes?: Like[];
