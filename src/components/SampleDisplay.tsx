@@ -21,7 +21,7 @@ export default function SampleDisplay() {
         const res = await fetch(`https://api.neynar.com/v2/farcaster/feed/user/casts?fid=${DEVELOPER_FID}&limit=5`, {
           headers: {
             accept: 'application/json',
-            api_key: process.env.NEYNAR_API_KEY || '',
+            Authorization: `Bearer ${process.env.NEYNAR_API_KEY}`,
           },
         });
 
