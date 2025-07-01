@@ -1,19 +1,26 @@
-// /components/SampleDisplay.tsx
 "use client";
 import { useMiniApp } from "@neynar/react";
+import { useState } from "react";
+
+const DEVELOPER_FID = 21024; // Replace with your actual FID
 
 export default function SampleDisplay() {
   const { context } = useMiniApp();
   const user = context?.user;
+  const userFid = user?.fid;
   const displayName = user?.displayName ?? user?.username ?? `Farcaster User`;
+
+  const [debugMessage, setDebugMessage] = useState<string | null>(null);
 
   if (!context) {
     return <p className="text-gray-500">Loading...</p>;
   }
 
+  const isDeveloper = userFid === DEVELOPER_FID;
+
   function handleTipClick() {
-    // your logic here, like triggering a deep link or calling an API
-    console.log("Tip button clicked!");
+    setDebugMessage(`Tip button clicked by user FID: ${userFid}`);
+    // Tip logic will go here
   }
 
   return (
@@ -24,12 +31,22 @@ export default function SampleDisplay() {
         Love this Mini App? Send a tip to support the developer 🎉
       </p>
 
-      <button
-        onClick={handleTipClick}
-        className="w-full py-3 bg-purple-600 text-white text-lg rounded-xl hover:bg-purple-700 transition"
-      >
-        Tip the Developer 💸
-      </button>
+      {isDeveloper ? (
+        <p className="text-sm text-red-500">
+          You are the developer — tipping yourself is not allowed.
+        </p>
+      ) : (
+        <button
+          onClick={handleTipClick}
+          className="w-full py-3 bg-purple-600 text-white text-lg rounded-xl hover:bg-purple-700 transition"
+        >
+          Tip the Developer 💸
+        </button>
+      )}
+
+      {debugMessage && (
+        <p className="mt-4 text-sm text-gray-500 border-t pt-4">{debugMessage}</p>
+      )}
     </div>
   );
 }
