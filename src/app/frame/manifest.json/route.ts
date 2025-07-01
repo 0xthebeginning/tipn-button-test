@@ -1,19 +1,18 @@
+import { NextResponse } from "next/server";
 export async function GET() {
-  const base = "https://tipn-button-test.vercel.app";
-
-  return Response.json({
+  return NextResponse.json({
     name: "Tip Button Mini App",
     description: "Prototype tipping mini app for developers",
-    icon: `${base}/favicon.ico`,
-    url: base,
+    icon: "https://tipn-button-test.vercel.app/favicon.ico",
+    url: "https://tipn-button-test.vercel.app",
     button: {
       title: "Tip Dev",
     },
     action: {
       type: "launch_frame",
       name: "Tip Button",
-      url: base,
-      splashImageUrl: `${base}/splash.png`,
+      url: "https://tipn-button-test.vercel.app",
+      splashImageUrl: "https://tipn-button-test.vercel.app/splash.png",
       splashBackgroundColor: "#f7f7f7",
     },
   });
