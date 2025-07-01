@@ -7,7 +7,7 @@ export async function GET() {
     icon: "https://tipn-button-test.vercel.app/favicon.ico",
     url: "https://tipn-button-test.vercel.app",
     button: {
-      title: "Tip Dev \u{1F4B8}", // 💸
+      title: "Tip Dev",
     },
     action: {
       type: "launch_frame",
