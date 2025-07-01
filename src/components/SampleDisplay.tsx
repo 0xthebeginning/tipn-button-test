@@ -49,7 +49,7 @@ export default function SampleDisplay() {
       )}
 
       {/* Debug Output */}
-      <div className="mt-6 p-3 bg-gray-100 rounded-md h-40 overflow-y-auto text-sm text-gray-800">
+      <div className="mt-6 p-3 bg-gray-100 rounded-md h-80 overflow-y-auto text-sm text-gray-800">
         {debugMessages.length > 0 ? (
           debugMessages.map((msg, index) => (
             <div key={index} className="mb-1">• {msg}</div>
