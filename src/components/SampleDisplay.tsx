@@ -4,9 +4,12 @@ import { useEffect, useState } from "react";
 
 const DEVELOPER_FID = 1083400;
 
+type Like = { fid: number };
 type Cast = {
-  hash: string;
   text: string;
+  reactions?: {
+    likes?: Like[];
+  };
 };
 
 export default function SampleDisplay() {
@@ -50,9 +53,15 @@ export default function SampleDisplay() {
           );
 
           const likesData = await likesRes.json();
-          const hasLiked = likesData?.likes?.some(
-            (like: { fid: number }) => like.fid === userFid
-          );
+          const likes = likesData?.likes || [];
+          const hasLiked = likes.some((like: { fid: number }) => like.fid === userFid);
+
+          setDebugMessages((prev) => [
+            `Cast: "${cast.text.slice(0, 40)}..." has ${likes.length} like(s). User ${
+              hasLiked ? "has" : "has not"
+            } liked.`,
+            ...prev,
+          ]);
 
           if (!hasLiked) {
             filteredCasts.push(cast);
