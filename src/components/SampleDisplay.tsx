@@ -1,3 +1,5 @@
+// /components/SampleDisplay.tsx
+"use client";
 import { useMiniApp } from "@neynar/react";
 
 export default function SampleDisplay() {
