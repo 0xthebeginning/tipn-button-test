@@ -2,7 +2,7 @@
 import { useMiniApp } from "@neynar/react";
 import { useEffect, useState } from "react";
 
-const DEVELOPER_FID = 21024;
+const DEVELOPER_FID = 1083400;
 
 export default function SampleDisplay() {
   const { context } = useMiniApp();
@@ -114,6 +114,22 @@ export default function SampleDisplay() {
           ))
         ) : (
           <p>No debug messages yet.</p>
+        )}
+      </div>
+
+      {/* Developer Casts Preview */}
+      <div className="mt-6">
+        <h3 className="text-md font-semibold text-purple-700 mb-2">Developers Recent Casts:</h3>
+        {devCasts.length > 0 ? (
+          <ul className="space-y-1 text-sm text-gray-800 list-disc list-inside">
+            {devCasts.map((cast: { text: string }, index: number) => (
+              <li key={index}>
+                {cast.text.length > 80 ? `${cast.text.slice(0, 77)}...` : cast.text}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-gray-500">No casts available.</p>
         )}
       </div>
     </div>
