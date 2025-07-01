@@ -32,24 +32,16 @@ export default function SampleDisplay() {
           }
         );
 
+        if (!res.ok) throw new Error(`API error: ${res.status}`);
+
         const data = await res.json();
-        const originalCasts = data?.casts;
+        const casts = data?.casts ?? [];
 
-        if (!originalCasts || !Array.isArray(originalCasts)) {
-          setDebugMessages((prev) => [
-            `Unexpected response format: ${JSON.stringify(data)}`,
-            ...prev,
-          ]);
-          return;
-        }
+        const filteredCasts: { hash: string; text: string }[] = [];
 
-        const filteredCasts = [];
-
-        for (const cast of originalCasts) {
-          const castHash = cast.hash;
-
+        for (const cast of casts) {
           const likesRes = await fetch(
-            `https://api.neynar.com/v2/farcaster/cast/likes?cast_hash=${castHash}`,
+            `https://api.neynar.com/v2/farcaster/cast/likes?castHash=${cast.hash}`,
             {
               headers: {
                 accept: 'application/json',
@@ -59,37 +51,29 @@ export default function SampleDisplay() {
           );
 
           const likesData = await likesRes.json();
-
-          const hasLiked = likesData?.likes?.some((like: Like) => like.fid === userFid);
+          const hasLiked = likesData?.likes?.some((like: { fid: number }) => like.fid === userFid);
 
           if (!hasLiked) {
-            filteredCasts.push(cast);
+            filteredCasts.push({ hash: cast.hash, text: cast.text });
           }
         }
 
         setDevCasts(filteredCasts);
 
         setDebugMessages((prev) => [
-          `Filtered dev casts: ${filteredCasts.length} of ${originalCasts.length} remain.`,
+          `Fetched ${casts.length} casts. ${filteredCasts.length} not liked yet.`,
           ...prev,
         ]);
-      } catch (err: unknown) {
-        const message =
-          err instanceof Error
-            ? err.message
-            : typeof err === 'string'
-            ? err
-            : JSON.stringify(err);
-
+      } catch (err) {
         setDebugMessages((prev) => [
-          `Error fetching dev casts: ${message}`,
+          `Error fetching dev casts: ${err instanceof Error ? err.message : String(err)}`,
           ...prev,
         ]);
       }
     }
 
     fetchDevCasts();
-}, [context, userFid]);
+  }, [context, userFid]);
 
   // No context yet, then we are loading still
   if (!context) {
