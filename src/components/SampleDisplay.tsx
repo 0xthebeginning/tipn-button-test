@@ -2,7 +2,7 @@
 import { useMiniApp } from "@neynar/react";
 import { useEffect, useState } from "react";
 
-const DEVELOPER_FID = 1102924;
+const DEVELOPER_FID = 21024;
 
 export default function SampleDisplay() {
   const { context } = useMiniApp();
@@ -21,7 +21,7 @@ export default function SampleDisplay() {
         const res = await fetch(`https://api.neynar.com/v2/farcaster/feed/user/casts?fid=${DEVELOPER_FID}&limit=5`, {
           headers: {
             accept: 'application/json',
-            Authorization: `Bearer AE7B7B6D-42AF-42EA-9181-79B0A6C0E963`,
+            api_key: process.env.NEYNAR_API_KEY || '',
           },
         });
 
