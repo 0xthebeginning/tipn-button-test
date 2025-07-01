@@ -2,7 +2,7 @@
 import { useMiniApp } from "@neynar/react";
 import { useState } from "react";
 
-const DEVELOPER_FID = 21024; // Replace with your actual FID
+const DEVELOPER_FID = 1102924;// Testing with @junyboy // 21024; // Replace with your actual FID
 
 export default function SampleDisplay() {
   const { context } = useMiniApp();
