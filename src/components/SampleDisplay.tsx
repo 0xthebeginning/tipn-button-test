@@ -1,6 +1,6 @@
 "use client";
 import { useMiniApp } from "@neynar/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const DEVELOPER_FID = 1102924;
 
@@ -11,10 +11,61 @@ export default function SampleDisplay() {
   const displayName = user?.displayName ?? user?.username ?? `Farcaster User`;
 
   const [debugMessages, setDebugMessages] = useState<string[]>([]);
+  const [devCasts, setDevCasts] = useState<{ text: string }[]>([]);
 
+  useEffect(() => {
+    if (!context) return;
+
+    async function fetchDevCasts() {
+      try {
+        const res = await fetch(`https://api.neynar.com/v2/farcaster/user/${DEVELOPER_FID}/casts?limit=5`, {
+          headers: {
+            'accept': 'application/json',
+            'api_key': process.env.NEYNAR_API_KEY || '',
+          },
+        });
+
+        if (!res.ok) throw new Error(`API error: ${res.status}`);
+
+        const data = await res.json();
+        setDevCasts(data.result.casts);
+        setDebugMessages(prev => [
+          `Fetched ${data.result.casts.length} dev casts.`,
+          ...prev,
+        ]);
+      } catch (err: unknown) {
+        let message = "Unknown error";
+        if (err instanceof Error) {
+          message = err.message;
+        } else if (typeof err === "string") {
+          message = err;
+        } else {
+          message = JSON.stringify(err);
+        }
+
+        setDebugMessages(prev => [
+          `Error fetching dev casts: ${message}`,
+          ...prev,
+        ]);
+      }
+    }
+
+    fetchDevCasts();
+  }, [context]);
+
+  // No context yet, then we are loading still
   if (!context) {
     return <p className="text-gray-500">Loading...</p>;
   }
+
+  <div className="text-sm text-gray-500">
+  <p className="font-semibold mt-4">Developers Latest Casts:</p>
+  <ul className="list-disc pl-5">
+    {devCasts.map((cast, index) => (
+      <li key={index}>{cast.text || "(no text)"}</li>
+    ))}
+  </ul>
+  </div>
 
   function handleTipClick() {
     const newMessage = `Tip button clicked by FID ${userFid} at ${new Date().toLocaleTimeString()}`;
