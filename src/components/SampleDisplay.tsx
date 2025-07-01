@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 
 const DEVELOPER_FID = 1083400;
 
+type Like = {
+  fid: number;
+};
+
 export default function SampleDisplay() {
   const { context } = useMiniApp();
   const user = context?.user;
@@ -14,43 +18,70 @@ export default function SampleDisplay() {
   const [devCasts, setDevCasts] = useState<{ text: string }[]>([]);
 
   useEffect(() => {
-    if (!context) return;
+    if (!context || !userFid) return;
 
     async function fetchDevCasts() {
       try {
-        const res = await fetch(`https://api.neynar.com/v2/farcaster/feed/user/casts?fid=${DEVELOPER_FID}&limit=5`, {
-          headers: {
-            'accept': 'application/json',
-            'api_key': process.env.NEXT_PUBLIC_NEYNAR_API_KEY || '',
-          },
-        });
-
-        if (!res.ok) throw new Error(`API error: ${res.status}`);
+        const res = await fetch(
+          `https://api.neynar.com/v2/farcaster/feed/user/casts?fid=${DEVELOPER_FID}&limit=5`,
+          {
+            headers: {
+              accept: 'application/json',
+              api_key: process.env.NEXT_PUBLIC_NEYNAR_API_KEY || '',
+            },
+          }
+        );
 
         const data = await res.json();
-        if (data?.casts) {
-          setDevCasts(data.casts);
-          setDebugMessages(prev => [
-            `Fetched ${data.casts.length} dev casts.`,
-            ...prev,
-          ]);
-        } else {
-          setDebugMessages(prev => [
+        const originalCasts = data?.casts;
+
+        if (!originalCasts || !Array.isArray(originalCasts)) {
+          setDebugMessages((prev) => [
             `Unexpected response format: ${JSON.stringify(data)}`,
             ...prev,
           ]);
-        }
-      } catch (err: unknown) {
-        let message = "Unknown error";
-        if (err instanceof Error) {
-          message = err.message;
-        } else if (typeof err === "string") {
-          message = err;
-        } else {
-          message = JSON.stringify(err);
+          return;
         }
 
-        setDebugMessages(prev => [
+        const filteredCasts = [];
+
+        for (const cast of originalCasts) {
+          const castHash = cast.hash;
+
+          const likesRes = await fetch(
+            `https://api.neynar.com/v2/farcaster/cast/likes?cast_hash=${castHash}`,
+            {
+              headers: {
+                accept: 'application/json',
+                api_key: process.env.NEXT_PUBLIC_NEYNAR_API_KEY || '',
+              },
+            }
+          );
+
+          const likesData = await likesRes.json();
+
+          const hasLiked = likesData?.likes?.some((like: Like) => like.fid === userFid);
+
+          if (!hasLiked) {
+            filteredCasts.push(cast);
+          }
+        }
+
+        setDevCasts(filteredCasts);
+
+        setDebugMessages((prev) => [
+          `Filtered dev casts: ${filteredCasts.length} of ${originalCasts.length} remain.`,
+          ...prev,
+        ]);
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : typeof err === 'string'
+            ? err
+            : JSON.stringify(err);
+
+        setDebugMessages((prev) => [
           `Error fetching dev casts: ${message}`,
           ...prev,
         ]);
@@ -58,7 +89,7 @@ export default function SampleDisplay() {
     }
 
     fetchDevCasts();
-  }, [context]);
+}, [context, userFid]);
 
   // No context yet, then we are loading still
   if (!context) {
