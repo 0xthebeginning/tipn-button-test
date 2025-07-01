@@ -18,10 +18,10 @@ export default function SampleDisplay() {
 
     async function fetchDevCasts() {
       try {
-        const res = await fetch(`https://api.neynar.com/v2/farcaster/user/${DEVELOPER_FID}/casts?limit=5`, {
+        const res = await fetch(`https://api.neynar.com/v2/farcaster/feed/user/casts?fid=${DEVELOPER_FID}&limit=5`, {
           headers: {
-            'accept': 'application/json',
-            'api_key': process.env.NEXT_PUBLIC_NEYNAR_API_KEY || '',
+            accept: 'application/json',
+            api_key: process.env.NEYNAR_API_KEY || '',
           },
         });
 
