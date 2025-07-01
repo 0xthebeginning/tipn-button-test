@@ -47,7 +47,9 @@ export default function SampleDisplay() {
           );
 
           const likesData = await likesRes.json();
-          const hasLiked = likesData?.likes?.some((like: { fid: number }) => like.fid === userFid);
+          const hasLiked = likesData?.likes?.some(
+            (like: { user: { fid: number } }) => like.user?.fid === userFid
+          );
 
           if (!hasLiked) {
             filteredCasts.push({ hash: cast.hash, text: cast.text });
