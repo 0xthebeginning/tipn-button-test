@@ -1,37 +1,20 @@
-// src/app/frame/manifest.json/route.ts
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+export async function GET() {
+  const base = "https://tipn-button-test.vercel.app";
 
-export async function GET(req: NextRequest) {
-  const host = req.headers.get("host");
-  if (!host) return NextResponse.error();
-
-  const base = `https://${host}`;
-
-  return NextResponse.json({
-    accountAssociation: {
-      // Optional: use Warpcast dev tool or Farcaster manifest tool to generate these
-      // header: "...",
-      // payload: "...",
-      // signature: "...",
+  return Response.json({
+    name: "Tip Button Mini App",
+    description: "Prototype tipping mini app for developers",
+    icon: `${base}/favicon.ico`,
+    url: base,
+    button: {
+      title: "Tip Dev",
     },
-    frame: {
-      version: "1",
-      name: "Tip Button Mini App",
-      subtitle: "Developer tipping utility",
-      description: "Prototype tipping mini app for developers",
-      iconUrl: `${base}/favicon.ico`,
-      homeUrl: base,
-      imageUrl: `${base}/api/opengraph-image`,          // Optional open-graph image
-      buttonTitle: "Tip Dev",
-      splashImageUrl: `${base}/splash.png`,              // Optional splash image
+    action: {
+      type: "launch_frame",
+      name: "Tip Button",
+      url: base,
+      splashImageUrl: `${base}/splash.png`,
       splashBackgroundColor: "#f7f7f7",
-      webhookUrl: `${base}/api/webhook`,                // Optional for tip/webhook events
-      // Additional optional fields:
-      // primaryCategory: "developer-tools",
-      // tags: ["tips","developers"],
-      // screenshotUrls: [`${base}/screenshots/1.png`],
-      // heroImageUrl: `${base}/hero.png`
-    }
+    },
   });
 }
