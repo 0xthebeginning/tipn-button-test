@@ -14,7 +14,7 @@ export async function GET() {
       type: "launch_frame",
       name: "Tip Button",
       url: "https://tipn-button-test.vercel.app",
-      splashImageUrl: "https://tipn-button-test.vercel.app/api/opengraph-image?fid=21024",
+      splashImageUrl: "https://tipn-button-test.vercel.app/splash.png",
       splashBackgroundColor: "#f7f7f7",
     },
   }, {
