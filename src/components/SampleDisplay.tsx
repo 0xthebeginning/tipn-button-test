@@ -28,11 +28,18 @@ export default function SampleDisplay() {
         if (!res.ok) throw new Error(`API error: ${res.status}`);
 
         const data = await res.json();
-        setDevCasts(data.result.casts);
-        setDebugMessages(prev => [
-          `Fetched ${data.result.casts.length} dev casts.`,
-          ...prev,
-        ]);
+        if (data?.result?.casts) {
+          setDevCasts(data.result.casts);
+          setDebugMessages(prev => [
+            `Fetched ${data.result.casts.length} dev casts.`,
+            ...prev,
+          ]);
+        } else {
+          setDebugMessages(prev => [
+            `Unexpected response format: ${JSON.stringify(data)}`,
+            ...prev,
+          ]);
+        }
       } catch (err: unknown) {
         let message = "Unknown error";
         if (err instanceof Error) {
