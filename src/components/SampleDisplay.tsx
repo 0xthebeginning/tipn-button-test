@@ -4,10 +4,6 @@ import { useEffect, useState } from "react";
 
 const DEVELOPER_FID = 1083400;
 
-type Like = {
-  fid: number;
-};
-
 export default function SampleDisplay() {
   const { context } = useMiniApp();
   const user = context?.user;
