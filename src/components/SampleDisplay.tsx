@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 
 const DEVELOPER_FID = 1083400;
 
+type Cast = {
+  hash: string;
+  text: string;
+};
+
 export default function SampleDisplay() {
   const { context } = useMiniApp();
   const user = context?.user;
@@ -13,64 +18,67 @@ export default function SampleDisplay() {
   const [debugMessages, setDebugMessages] = useState<string[]>([]);
   const [devCasts, setDevCasts] = useState<{ text: string }[]>([]);
 
-  useEffect(() => {
+    useEffect(() => {
     if (!context || !userFid) return;
 
-    async function fetchDevCasts() {
+    async function fetchAndFilterDevCasts() {
       try {
         const res = await fetch(
-          `https://api.neynar.com/v2/farcaster/feed/user/casts?fid=${DEVELOPER_FID}&limit=5`,
+          `https://api.neynar.com/v2/farcaster/feed/user-casts?fid=${DEVELOPER_FID}&limit=5`,
           {
             headers: {
-              accept: 'application/json',
-              api_key: process.env.NEXT_PUBLIC_NEYNAR_API_KEY || '',
+              accept: "application/json",
+              api_key: process.env.NEXT_PUBLIC_NEYNAR_API_KEY || "",
             },
           }
         );
 
-        if (!res.ok) throw new Error(`API error: ${res.status}`);
-
         const data = await res.json();
-        const casts = data?.casts ?? [];
+        const casts: Cast[] = data?.casts || [];
 
-        const filteredCasts: { hash: string; text: string }[] = [];
+        const filteredCasts: Cast[] = [];
 
         for (const cast of casts) {
           const likesRes = await fetch(
-            `https://api.neynar.com/v2/farcaster/cast/likes?castHash=${cast.hash}`,
+            `https://api.neynar.com/v2/farcaster/cast/likes?hash=${cast.hash}`,
             {
               headers: {
-                accept: 'application/json',
-                api_key: process.env.NEXT_PUBLIC_NEYNAR_API_KEY || '',
+                accept: "application/json",
+                api_key: process.env.NEXT_PUBLIC_NEYNAR_API_KEY || "",
               },
             }
           );
 
           const likesData = await likesRes.json();
           const hasLiked = likesData?.likes?.some(
-            (like: { user: { fid: number } }) => like.user?.fid === userFid
+            (like: { fid: number }) => like.fid === userFid
           );
 
           if (!hasLiked) {
-            filteredCasts.push({ hash: cast.hash, text: cast.text });
+            filteredCasts.push(cast);
           }
         }
 
         setDevCasts(filteredCasts);
-
         setDebugMessages((prev) => [
           `Fetched ${casts.length} casts. ${filteredCasts.length} not liked yet.`,
           ...prev,
         ]);
-      } catch (err) {
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : typeof err === "string"
+            ? err
+            : JSON.stringify(err);
         setDebugMessages((prev) => [
-          `Error fetching dev casts: ${err instanceof Error ? err.message : String(err)}`,
+          `Error filtering dev casts: ${message}`,
           ...prev,
         ]);
       }
     }
 
-    fetchDevCasts();
+    fetchAndFilterDevCasts();
   }, [context, userFid]);
 
   // No context yet, then we are loading still
