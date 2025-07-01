@@ -1,88 +1,33 @@
-// src/components/SampleDisplay.tsx
-"use client";
-
-import React, { useEffect, useState } from "react";
 import { useMiniApp } from "@neynar/react";
-import { sdk } from "@farcaster/frame-sdk";
 
 export default function SampleDisplay() {
-  const { isSDKLoaded, context } = useMiniApp();
-  console.log("🧠 Neynar context:", context);
+  const { context } = useMiniApp();
   const user = context?.user;
-  const fid = user?.fid;
-  const [message, setMessage] = useState<string>("");
+  const displayName = user?.displayName ?? user?.username ?? `Farcaster User`;
 
-  useEffect(() => {
-  if (isSDKLoaded) {
-    console.log("🧠 Full Neynar context:", JSON.stringify(context, null, 2));
+  if (!context) {
+    return <p className="text-gray-500">Loading...</p>;
   }
-}, [isSDKLoaded, context]);
 
-function logDeep(obj: Record<string, unknown>, prefix = "") {
-  for (const key in obj) {
-    const value = obj[key];
-    const path = prefix ? `${prefix}.${key}` : key;
-    if (typeof value === "object" && value !== null) {
-      logDeep(value as Record<string, unknown>, path);
-    } else {
-      console.log(`${path}:`, value);
-    }
+  function handleTipClick() {
+    // your logic here, like triggering a deep link or calling an API
+    console.log("Tip button clicked!");
   }
-}
-
-useEffect(() => {
-  if (isSDKLoaded && context) {
-    console.log("🔎 Exploring context keys:");
-    logDeep(context);
-  }
-}, [isSDKLoaded, context, logDeep]);
-
-  useEffect(() => {
-    if (isSDKLoaded) {
-      sdk.actions.ready();
-    }
-  }, [isSDKLoaded]);
-
-  useEffect(() => {
-    if (isSDKLoaded && fid) {
-      const displayName = user?.displayName ?? user?.username ?? `FID#${fid}`;
-      setMessage(`Hello, ${displayName}! Your Farcaster ID is ${fid}`);
-    }
-  }, [isSDKLoaded, fid, user]);
-
-  const [tipped, setTipped] = useState(false);
-
-    const handleTip = () => {
-    window.parent.postMessage(
-        {
-        type: "farcaster-frame-action",
-        action: "like",
-        },
-        "*"
-    );
-    setTipped(true);
-    setTimeout(() => setTipped(false), 3000);
-    };
 
   return (
-    <div className="m-4 p-4 bg-white border rounded shadow">
-      <h2 className="text-black font-semibold mb-2">Neynar Connected:</h2>
-      {message ? (
-        <p className="text-black">{message}</p>
-      ) : (
-        <p className="text-black">
-        {!isSDKLoaded ? 'Initializing session…' : 'Loading your ID…'}
-        </p>
-      )}
+    <div className="m-4 p-6 bg-white border rounded-2xl shadow space-y-4">
+      <h2 className="text-xl font-bold text-purple-700">Welcome, {displayName}!</h2>
 
-      <h3 className="text-black font-semibold mt-4 mb-2">Press button to Like(Tip) from user to trigger TIPN sensing webhook(Assuming user is tipping with TIPN)</h3>
-        <button
-        onClick={handleTip}
-        className="mt-4 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
-        >
-        {tipped ? "✅ Tipped!" : "Tip this Mini App Dev 💸"}
-        </button>
+      <p className="text-gray-700">
+        Love this Mini App? Send a tip to support the developer 🎉
+      </p>
+
+      <button
+        onClick={handleTipClick}
+        className="w-full py-3 bg-purple-600 text-white text-lg rounded-xl hover:bg-purple-700 transition"
+      >
+        Tip the Developer 💸
+      </button>
     </div>
   );
 }
-
