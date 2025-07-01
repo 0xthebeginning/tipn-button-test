@@ -9,9 +9,6 @@ type Like = { fid: number };
 type Cast = {
   hash: string;
   text: string;
-  reactions?: {
-    likes?: Like[];
-  };
 };
 
 export default function SampleDisplay() {
@@ -55,13 +52,12 @@ export default function SampleDisplay() {
           );
 
           const likesData = await likesRes.json();
-          const likes = likesData?.likes || [];
-          const hasLiked = likes.some((like: { fid: number }) => like.fid === userFid);
+
+          const likes = likesData?.likes ?? [];
+          const hasLiked = likes.some((like: Like) => like.fid === userFid);
 
           setDebugMessages((prev) => [
-            `Cast: "${cast.text.slice(0, 40)}..." has ${likes.length} like(s). User ${
-              hasLiked ? "has" : "has not"
-            } liked.`,
+            `Cast "${cast.text.slice(0, 20)}..." → Likes: ${likes.length}, Liked by user: ${hasLiked}`,
             ...prev,
           ]);
 
