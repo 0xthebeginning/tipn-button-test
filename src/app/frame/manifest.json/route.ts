@@ -1,3 +1,4 @@
+// /src/app/frame/manifest.json/route.ts
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -13,8 +14,13 @@ export async function GET() {
       type: "launch_frame",
       name: "Tip Button",
       url: "https://tipn-button-test.vercel.app",
-      splashImageUrl: "https://tipn-button-test.vercel.app/api/opengraph-image?fid=21024", // 👈 THIS must be a full URL
+      splashImageUrl: "https://tipn-button-test.vercel.app/api/opengraph-image?fid=21024",
       splashBackgroundColor: "#f7f7f7",
     },
+  }, {
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store"
+    }
   });
 }
