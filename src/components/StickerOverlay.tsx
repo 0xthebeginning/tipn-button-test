@@ -26,13 +26,25 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
 
   useImperativeHandle(ref, () => ({
     downloadImage: () => {
-      if (!containerRef.current) return;
-      html2canvas(containerRef.current).then((canvas) => {
-        const link = document.createElement('a');
-        link.download = 'meme.png';
-        link.href = canvas.toDataURL();
-        link.click();
-      });
+        if (!containerRef.current) return;
+
+        html2canvas(containerRef.current).then((canvas) => {
+            try {
+            const dataUrl = canvas.toDataURL('image/png');
+
+            // Create a temporary link element
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = 'meme.png';
+
+            // Append, trigger click, and remove
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            } catch (error) {
+            console.error("Failed to download image:", error);
+            }
+        });
     },
     shareImage: async () => {
       if (!containerRef.current) return;
