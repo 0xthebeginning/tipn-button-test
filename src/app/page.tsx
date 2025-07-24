@@ -46,19 +46,12 @@ export default function Page() {
 
               <div className="flex gap-4">
                 <button
-                  onClick={() => stickerRef.current?.downloadImage()}
-                  className="flex-1 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                >
-                  Download
-                </button>
-                <button
                   onClick={() => stickerRef.current?.shareImage()}
                   className="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                 >
                   Share
                 </button>
               </div>
-
 
               <button
                 onClick={() => setShowTipping(true)}
