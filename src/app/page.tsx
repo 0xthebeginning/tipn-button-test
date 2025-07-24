@@ -1,11 +1,22 @@
 'use client';
-import { useState } from "react";
+import { useRef, useState } from "react";
+import html2canvas from "html2canvas";
 import SampleDisplay from "../components/SampleDisplay";
 import StickerOverlay from '../components/StickerOverlay';
 
 export default function Page() {
   const [showTipping, setShowTipping] = useState(false);
   const [photoURL, setPhotoURL] = useState<string | null>(null);
+const captureRef = useRef<HTMLDivElement>(null);
+
+  const handleDownload = async () => {
+  if (!captureRef.current) return;
+  const canvas = await html2canvas(captureRef.current);
+  const link = document.createElement("a");
+  link.download = "my-sticker-photo.png";
+  link.href = canvas.toDataURL();
+  link.click();
+};
 
   function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -36,10 +47,21 @@ export default function Page() {
           {photoURL && (
             <div className="mt-4">
               <p className="text-sm text-gray-500">Preview with Sticker:</p>
-              <StickerOverlay
-                photoUrl={photoURL}
-                stickerUrl="/superinuMain.png"
-              />
+
+              <div ref={captureRef} className="relative inline-block">
+                <StickerOverlay
+                  photoUrl={photoURL}
+                  stickerUrl="/superinuMain.png"
+                />
+              </div>
+
+              <button
+                onClick={handleDownload}
+                className="mt-4 w-full py-3 bg-green-600 text-white text-lg rounded-xl hover:bg-green-700 transition"
+              >
+                Download Image
+              </button>
+
               <button
                 onClick={() => setShowTipping(true)}
                 className="mt-4 w-full py-3 bg-purple-600 text-white text-lg rounded-xl hover:bg-purple-700 transition"
