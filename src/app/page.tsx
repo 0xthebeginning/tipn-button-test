@@ -1,6 +1,7 @@
 'use client';
 import { useState } from "react";
 import SampleDisplay from "../components/SampleDisplay";
+import StickerOverlay from '../components/StickerOverlay';
 
 export default function Page() {
   const [showTipping, setShowTipping] = useState(false);
@@ -34,8 +35,11 @@ export default function Page() {
 
           {photoURL && (
             <div className="mt-4">
-              <p className="text-sm text-gray-500">Preview:</p>
-              <img src={photoURL} alt="Uploaded" className="w-full rounded-lg shadow" />
+              <p className="text-sm text-gray-500">Preview with Sticker:</p>
+              <StickerOverlay
+                photoUrl={photoURL}
+                stickerUrl="/superinuMain.png"
+              />
               <button
                 onClick={() => setShowTipping(true)}
                 className="mt-4 w-full py-3 bg-purple-600 text-white text-lg rounded-xl hover:bg-purple-700 transition"
