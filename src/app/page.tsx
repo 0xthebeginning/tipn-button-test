@@ -1,22 +1,12 @@
 'use client';
 import { useRef, useState } from "react";
-import html2canvas from "html2canvas";
 import SampleDisplay from "../components/SampleDisplay";
-import StickerOverlay from '../components/StickerOverlay';
+import StickerOverlay, { StickerOverlayHandle } from '../components/StickerOverlay';
 
 export default function Page() {
   const [showTipping, setShowTipping] = useState(false);
   const [photoURL, setPhotoURL] = useState<string | null>(null);
-const captureRef = useRef<HTMLDivElement>(null);
-
-  const handleDownload = async () => {
-  if (!captureRef.current) return;
-  const canvas = await html2canvas(captureRef.current);
-  const link = document.createElement("a");
-  link.download = "my-sticker-photo.png";
-  link.href = canvas.toDataURL();
-  link.click();
-};
+  const stickerRef = useRef<StickerOverlayHandle>(null);
 
   function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -48,19 +38,27 @@ const captureRef = useRef<HTMLDivElement>(null);
             <div className="mt-4">
               <p className="text-sm text-gray-500">Preview with Sticker:</p>
 
-              <div ref={captureRef} className="relative inline-block">
-                <StickerOverlay
-                  photoUrl={photoURL}
-                  stickerUrl="/superinuMain.png"
-                />
+              <StickerOverlay
+                ref={stickerRef}
+                photoUrl={photoURL}
+                stickerUrl="/superinuMain.png"
+              />
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => stickerRef.current?.downloadImage()}
+                  className="flex-1 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                >
+                  Download
+                </button>
+                <button
+                  onClick={() => stickerRef.current?.shareImage()}
+                  className="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                >
+                  Share
+                </button>
               </div>
 
-              <button
-                onClick={handleDownload}
-                className="mt-4 w-full py-3 bg-green-600 text-white text-lg rounded-xl hover:bg-green-700 transition"
-              >
-                Download Image
-              </button>
 
               <button
                 onClick={() => setShowTipping(true)}
