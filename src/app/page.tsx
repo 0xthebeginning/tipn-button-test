@@ -1,27 +1,50 @@
 'use client';
-
 import { useState } from "react";
 import SampleDisplay from "../components/SampleDisplay";
 
 export default function Page() {
   const [showTipping, setShowTipping] = useState(false);
+  const [photoURL, setPhotoURL] = useState<string | null>(null);
+
+  function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPhotoURL(url);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-gray-100 flex items-center justify-center">
       {showTipping ? (
         <SampleDisplay />
       ) : (
-        <div className="m-4 p-6 bg-white border rounded-2xl shadow space-y-6 text-center">
-          <h1 className="text-2xl font-bold text-purple-800">🎉 Welcome to My Mini App</h1>
+        <div className="m-4 p-6 bg-white border rounded-2xl shadow space-y-6 text-center w-full max-w-md">
+          <h1 className="text-2xl font-bold text-purple-800">📸 Share a Meme Moment</h1>
           <p className="text-gray-600">
-            This is your landing page. Click below to support the developer!
+            Upload or take a photo to start creating your custom cast!
           </p>
-          <button
-            onClick={() => setShowTipping(true)}
-            className="mt-10 w-full py-3 bg-purple-600 text-white text-lg rounded-xl hover:bg-purple-700 transition"
-          >
-            Support the Developer 💸
-          </button>
+
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handlePhotoUpload}
+            className="w-full text-sm text-gray-600 file:bg-purple-600 file:text-white file:rounded-lg file:px-4 file:py-2 file:border-none"
+          />
+
+          {photoURL && (
+            <div className="mt-4">
+              <p className="text-sm text-gray-500">Preview:</p>
+              <img src={photoURL} alt="Uploaded" className="w-full rounded-lg shadow" />
+              <button
+                onClick={() => setShowTipping(true)}
+                className="mt-4 w-full py-3 bg-purple-600 text-white text-lg rounded-xl hover:bg-purple-700 transition"
+              >
+                Proceed to Tipping
+              </button>
+            </div>
+          )}
         </div>
       )}
     </main>
