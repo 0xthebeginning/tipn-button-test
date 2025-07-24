@@ -28,7 +28,6 @@ export default function Page() {
           <input
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={handlePhotoUpload}
             className="w-full text-sm text-gray-600 file:bg-purple-600 file:text-white file:rounded-lg file:px-4 file:py-2 file:border-none"
           />
