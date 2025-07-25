@@ -1,4 +1,3 @@
-// src/app/layout.tsx
 import "~/app/globals.css";
 import type { Metadata } from "next";
 import ClientWrapper from "./client-wrapper";
@@ -25,6 +24,7 @@ export const metadata: Metadata = {
     description: "Create and share custom SuperInu memes!",
     images: ["https://superinu-miniapp.vercel.app/preview.png"],
   },
+
   other: {
     "fc:frame": "vNext",
     "fc:frame:button:1": "SuperInu",
@@ -41,5 +41,3 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
-
-
