@@ -1,6 +1,8 @@
+// src/app/api/farcaster/upload/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { put } from '@vercel/blob';
 
-const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY!;
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   const form = await req.formData();
@@ -10,23 +12,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No file provided' }, { status: 400 });
   }
 
-  const uploadForm = new FormData();
-  uploadForm.append('file', file);
+  try {
+    const blob = await put(file.name, file.stream(), {
+      access: 'public', // or 'private' if you want restricted access
+    });
 
-  const res = await fetch('https://api.neynar.com/v2/farcaster/upload/image', {
-    method: 'POST',
-    headers: {
-      'api_key': NEYNAR_API_KEY,
-    },
-    body: uploadForm,
-  });
-
-  if (!res.ok) {
-    const error = await res.text();
-    console.error('Neynar upload failed:', error);
-    return NextResponse.json({ error }, { status: res.status });
+    return NextResponse.json({ url: blob.url });
+  } catch (err) {
+    console.error('Upload to Blob failed:', err);
+    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   }
-
-  const json = await res.json();
-  return NextResponse.json(json);
 }

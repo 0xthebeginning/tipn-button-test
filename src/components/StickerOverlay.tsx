@@ -1,3 +1,4 @@
+// components/StickerOverlay.tsx
 'use client';
 
 import html2canvas from 'html2canvas';
@@ -21,7 +22,7 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
     top: 50,
     width: 100,
     height: 100,
-    rotation: 0, // NEW
+    rotation: 0,
   });
 
   useImperativeHandle(ref, () => ({
@@ -40,32 +41,29 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
         return;
       }
 
-      const formData = new FormData();
-      formData.append('file', blob, 'superinu-meme.png');
+      const uploadRes = await fetch('/api/farcaster/upload', {
+        method: 'POST',
+        body: (() => {
+          const fd = new FormData();
+          fd.append('file', blob, 'superinu-meme.png');
+          return fd;
+        })(),
+      });
 
-      try {
-        const uploadRes = await fetch('/api/farcaster/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!uploadRes.ok) {
-          const err = await uploadRes.text();
-          console.error('Upload error response:', err);
-          throw new Error(err);
-        }
-
-        const { url } = await uploadRes.json();
-        const castText = 'Made this SuperInu meme 🐶✨';
-        const composeUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(
-          `${castText}\n\nTry it here: https://superinu-miniapp.vercel.app`
-        )}&embeds[]=${encodeURIComponent(url)}`;
-
-        window.open(composeUrl, '_blank');
-      } catch (err) {
-        console.error('Failed to upload or share:', err);
-        alert('Error uploading meme. Please try again!');
+      if (!uploadRes.ok) {
+        const error = await uploadRes.text();
+        console.error('Upload error:', error);
+        alert('Upload failed. Try again!');
+        return;
       }
+
+      const { url } = await uploadRes.json();
+      const castText = 'Made this SuperInu meme 🐶✨';
+      const composeUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(
+        `${castText}\n\nTry it here: https://superinu-miniapp.vercel.app`
+      )}&embeds[]=${encodeURIComponent(url)}`;
+
+      window.open(composeUrl, '_blank');
     },
   }));
 
@@ -84,7 +82,7 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
           backgroundImage: `url(${stickerUrl})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          transform: `rotate(${frame.rotation}deg)`, // NEW
+          transform: `rotate(${frame.rotation}deg)`,
         }}
       />
 
@@ -93,10 +91,10 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
           target={stickerRef}
           draggable
           resizable
-          rotatable // NEW
+          rotatable
           throttleDrag={1}
           throttleResize={1}
-          throttleRotate={1} // NEW
+          throttleRotate={1}
           onDrag={({ left, top }) => {
             setFrame((f) => ({ ...f, left, top }));
           }}
