@@ -18,9 +18,9 @@ export async function GET() {
         splashBackgroundColor: "#52a842",
       },
       accountAssociation: {
-        header: "<your-header>",
-        payload: "<your-payload>",
-        signature: "<your-signature>",
+        header: "eyJmaWQiOjIxMDI0LCJ0eXBlIjoiYXV0aCIsImtleSI6IjB4MWEwQTJhQkRmRTlCMThDQjgxQjg5NGQ3MEMwOGQ0MTBiYTQxNWM4NSJ9",
+        payload: "eyJkb21haW4iOiJzdXBlcmludS1taW5pYXBwLnZlcmNlbC5hcHAifQ",
+        signature: "yxEn/4kbNiUK3SPK39qwctGsHjQGjVVnIlWY3jwNQwB3lw3xJXT3TBePtkFk7DswVufsH3p5bJc1Eorsk8NkgBs=",
       },
     },
     {
