@@ -1,7 +1,7 @@
 // src/app/layout.tsx
-import type { Metadata } from "next";
 import "~/app/globals.css";
-import ClientWrapper from "./client-wrapper"; // import client component for UI logic
+import type { Metadata } from "next";
+import ClientWrapper from "./client-wrapper";
 
 export const metadata: Metadata = {
   title: "SuperInu",
@@ -19,8 +19,16 @@ export const metadata: Metadata = {
       },
     ],
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "SuperInu",
+    description: "Create and share custom SuperInu memes!",
+    images: ["https://superinu-miniapp.vercel.app/preview.png"],
+  },
   other: {
     "fc:frame": "vNext",
+    "fc:frame:button:1": "SuperInu",
+    "fc:frame:post_url": "https://superinu-miniapp.vercel.app/api/frame",
   },
 };
 
