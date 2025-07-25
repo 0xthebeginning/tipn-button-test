@@ -1,7 +1,6 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import SampleDisplay from './SampleDisplay';
 import StickerOverlay, { StickerOverlayHandle } from './StickerOverlay';
 
 export default function EditorPageClient() {
