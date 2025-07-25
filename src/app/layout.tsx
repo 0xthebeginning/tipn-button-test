@@ -1,5 +1,6 @@
-import "~/app/globals.css";
+// src/app/layout.tsx
 import type { Metadata } from "next";
+import "~/app/globals.css";
 import ClientWrapper from "./client-wrapper";
 
 export const metadata: Metadata = {
@@ -18,21 +19,19 @@ export const metadata: Metadata = {
       },
     ],
   },
-  twitter: {
-    card: "summary_large_image",
-    title: "SuperInu",
-    description: "Create and share custom SuperInu memes!",
-    images: ["https://superinu-miniapp.vercel.app/preview.png"],
-  },
-
   other: {
+    // Minimal required tags for Farcaster Mini App embed
     "fc:frame": "vNext",
-    "fc:frame:button:1": "SuperInu",
     "fc:frame:post_url": "https://superinu-miniapp.vercel.app/api/frame",
+    "fc:frame:button:1": "Start",
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
       <body>
