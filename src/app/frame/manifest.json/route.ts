@@ -1,11 +1,6 @@
-// /src/app/frame/manifest.json/route.ts
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  const accountAssociation = process.env.NEXT_PUBLIC_ACCOUNT_ASSOCIATION
-    ? JSON.parse(process.env.NEXT_PUBLIC_ACCOUNT_ASSOCIATION)
-    : undefined;
-
   return NextResponse.json(
     {
       name: "SuperInu",
@@ -22,7 +17,14 @@ export async function GET() {
         splashImageUrl: "https://superinu-miniapp.vercel.app/splash.png",
         splashBackgroundColor: "#52a842",
       },
-      ...(accountAssociation ? { accountAssociation } : {}),
+      accountAssociation: {
+        header:
+          "eyJmaWQiOjIxMDI0LCJ0eXBlIjoiYXV0aCIsImtleSI6IjB4MWEwQTJhQkRmRTlCMThDQjgxQjg5NGQ3MEMwOGQ0MTBiYTQxNWM4NSJ9",
+        payload:
+          "eyJkb21haW4iOiJzdXBlcmludS1taW5pYXBwLnZlcmNlbC5hcHAifQ",
+        signature:
+          "yxEn/4kbNiUK3SPK39qwctGsHjQGjVVnIlWY3jwNQwB3lw3xJXT3TBePtkFk7DswVufsH3p5bJc1Eorsk8NkgBs=",
+      },
     },
     {
       headers: {
