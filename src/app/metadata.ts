@@ -6,6 +6,7 @@ import { getMiniAppEmbedMetadata } from "~/lib/utils";
 export const generateMetadata = async (): Promise<Metadata> => {
   return {
     title: APP_NAME,
+    description: APP_DESCRIPTION,
     openGraph: {
       title: APP_NAME,
       description: APP_DESCRIPTION,
