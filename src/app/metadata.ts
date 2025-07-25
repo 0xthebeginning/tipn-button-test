@@ -11,9 +11,9 @@ export const generateMetadata = async (): Promise<Metadata> => {
       title: APP_NAME,
       description: APP_DESCRIPTION,
       images: [APP_OG_IMAGE_URL],
-    },
-    other: {
-      "fc:frame": JSON.stringify(getMiniAppEmbedMetadata()),
-    },
+    }//,
+//    other: {
+//      "fc:frame": JSON.stringify(getMiniAppEmbedMetadata()),
+//    },
   };
 };

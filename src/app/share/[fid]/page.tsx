@@ -21,10 +21,10 @@ export async function generateMetadata({
       title: APP_NAME,
       description: APP_DESCRIPTION,
       images: [imageUrl],
-    },
-    other: {
-      "fc:frame": JSON.stringify(getMiniAppEmbedMetadata(imageUrl)),
-    },
+    }//,
+//    other: {
+//      "fc:frame": JSON.stringify(getMiniAppEmbedMetadata(imageUrl)),
+//    },
   };
 }
 
