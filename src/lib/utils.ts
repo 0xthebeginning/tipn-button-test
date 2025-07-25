@@ -80,6 +80,35 @@ export async function getFarcasterMetadata(): Promise<MiniAppManifest> {
     throw new Error('NEXT_PUBLIC_URL not configured');
   }
 
+  const accountAssociation = {
+    header: "eyJmaWQiOjIxMDI0LCJ0eXAiOiJjdXN0b2R5Iiwia2V5IjoiMHgzNzM0YjUyNDg1ZDk0YWE0NzI1NzU5ZDZlZDc1YjFkNTFjNWI3OGQ3In0=",
+    payload: "eyJkb21haW4iOiJzdXBlcmludS1taW5pYXBwLnZlcmNlbC5hcHAifQ==",
+    signature: "yxEn/4kbNiUK3SPK39qwctGQJsw+2f1qkXx+Br2j3wVU9HH/jWzOw3Zk4jlU8Y3uHnPEtU88TDXYj2VE9ZWeCA=="
+  };
+
+  return {
+    accountAssociation,
+    frame: {
+      version: "1",
+      name: APP_NAME ?? "SuperInu",
+      iconUrl: APP_ICON_URL,
+      homeUrl: APP_URL,
+      imageUrl: APP_OG_IMAGE_URL,
+      buttonTitle: APP_BUTTON_TEXT ?? "Launch SuperInu",
+      splashImageUrl: APP_SPLASH_URL,
+      splashBackgroundColor: APP_SPLASH_BACKGROUND_COLOR,
+      webhookUrl: APP_WEBHOOK_URL,
+      description: APP_DESCRIPTION,
+      primaryCategory: APP_PRIMARY_CATEGORY,
+      tags: APP_TAGS,
+    },
+  };
+}
+
+  if (!APP_URL) {
+    throw new Error('NEXT_PUBLIC_URL not configured');
+  }
+
   // Get the domain from the URL (without https:// prefix)
   const domain = new URL(APP_URL).hostname;
   console.log('Using domain for manifest:', domain);
