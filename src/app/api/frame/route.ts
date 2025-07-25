@@ -5,7 +5,7 @@ export async function POST() {
     frames: [
       {
         text: "SuperInu Miniapp Ready!",
-        image: "https://superinu-miniapp.vercel.app/preview.png",
+        image: "https://superinu-miniapp.vercel.app/splash.png",
         buttons: [{ label: "Start" }],
       },
     ],

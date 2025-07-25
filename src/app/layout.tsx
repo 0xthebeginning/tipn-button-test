@@ -11,7 +11,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta property="og:title" content="SuperInu" />
         <meta property="og:description" content="Create and share custom SuperInu memes!" />
         <meta property="og:url" content="https://superinu-miniapp.vercel.app" />
-        <meta property="og:image" content="https://superinu-miniapp.vercel.app/preview.png" />
+        <meta property="og:image" content="https://superinu-miniapp.vercel.app/splash.png" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:image:alt" content="SuperInu Meme Preview" />
