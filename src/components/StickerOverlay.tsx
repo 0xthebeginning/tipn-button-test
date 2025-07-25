@@ -42,9 +42,6 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
         return;
       }
 
-      const file = new File([blob], 'superinu-meme.png', { type: 'image/png' });
-      const imageUrl = URL.createObjectURL(file); // temporary preview URL
-
       const castText = `Made a SuperInu meme! 🐶✨\n\nTry it: https://superinu-miniapp.vercel.app`;
       const intentUrl = `https://client.neynar.com/intent/cast?text=${encodeURIComponent(castText)}`;
 
