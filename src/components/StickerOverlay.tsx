@@ -51,6 +51,7 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
 
         if (!uploadRes.ok) {
           const err = await uploadRes.text();
+          console.error('Upload error response:', err);
           throw new Error(err);
         }
 
