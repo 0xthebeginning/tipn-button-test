@@ -15,6 +15,7 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
 }>(({ photoUrl, stickerUrl }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const stickerRef = useRef<HTMLDivElement>(null);
+  const [hideControls, setHideControls] = useState(false);
 
   const [frame, setFrame] = useState({
     left: 50,
@@ -25,26 +26,33 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
 
   useImperativeHandle(ref, () => ({
     shareImage: async () => {
-      if (!containerRef.current) return;
-      const canvas = await html2canvas(containerRef.current);
-      canvas.toBlob(async (blob) => {
-        if (!blob) return;
-        const file = new File([blob], 'meme.png', { type: 'image/png' });
+        if (!containerRef.current) return;
+        
+        // Hide moveable grid
+        setHideControls(true);
 
-        if (navigator.canShare?.({ files: [file] })) {
-          try {
+        // Wait for DOM to update
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const canvas = await html2canvas(containerRef.current);
+        canvas.toBlob(async (blob) => {
+            if (!blob) {
+            setHideControls(false);
+            return;
+            }
+            const file = new File([blob], 'meme.png', { type: 'image/png' });
+            try {
             await navigator.share({
-              files: [file],
-              title: 'My Meme',
-              text: 'Check this out!',
+                files: [file],
+                title: 'My Meme',
+                text: 'Check this out!',
             });
-          } catch (err) {
-            console.error('Error sharing image:', err);
-          }
-        } else {
-          alert('Sharing is not supported on this device.');
-        }
-      });
+            } catch (err) {
+            console.error('Sharing failed:', err);
+            } finally {
+            setHideControls(false);
+            }
+        });
     }
   }));
 
@@ -69,24 +77,26 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
       />
 
       {/* Moveable handler */}
-      <Moveable
-        target={stickerRef}
-        draggable
-        resizable
-        throttleDrag={1}
-        throttleResize={1}
-        onDrag={({ left, top }) => {
-          setFrame((f) => ({ ...f, left, top }));
-        }}
-        onResize={({ width, height, drag }) => {
-          setFrame({
-            width,
-            height,
-            left: drag.left,
-            top: drag.top,
-          });
-        }}
-      />
+        {!hideControls && (
+        <Moveable
+            target={stickerRef}
+            draggable
+            resizable
+            throttleDrag={1}
+            throttleResize={1}
+            onDrag={({ left, top }) => {
+            setFrame((f) => ({ ...f, left, top }));
+            }}
+            onResize={({ width, height, drag }) => {
+            setFrame({
+                width,
+                height,
+                left: drag.left,
+                top: drag.top,
+            });
+            }}
+        />
+        )}
     </div>
   );
 });
