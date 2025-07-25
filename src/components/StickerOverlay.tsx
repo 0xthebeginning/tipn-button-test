@@ -1,4 +1,3 @@
-// components/StickerOverlay.tsx
 'use client';
 
 import html2canvas from 'html2canvas';
@@ -30,33 +29,47 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
 
       setHideControls(true);
       await new Promise((r) => setTimeout(r, 100));
+
       const canvas = await html2canvas(containerRef.current);
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve));
+
       setHideControls(false);
-      if (!blob) return;
+      if (!blob) {
+        alert('Failed to generate image');
+        return;
+      }
 
       const formData = new FormData();
-      formData.append('file', blob, 'superinu.png');
+      formData.append('file', blob, 'superinu-meme.png');
 
-      const uploadRes = await fetch('/api/farcaster/upload', {
-        method: 'POST',
-        body: formData,
-      });
+      try {
+        const uploadRes = await fetch('/api/farcaster/upload', {
+          method: 'POST',
+          body: formData,
+        });
 
-      const { url } = await uploadRes.json();
+        if (!uploadRes.ok) {
+          const err = await uploadRes.text();
+          throw new Error(err);
+        }
 
-      const castText = 'Made this SuperInu meme 🐶✨';
-      const composeUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(
-        castText + '\n\nTry it here: https://superinu-miniapp.vercel.app'
-      )}&embeds[]=${encodeURIComponent(url)}`;
+        const { url } = await uploadRes.json();
+        const castText = 'Made this SuperInu meme 🐶✨';
+        const composeUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(
+          `${castText}\n\nTry it here: https://superinu-miniapp.vercel.app`
+        )}&embeds[]=${encodeURIComponent(url)}`;
 
-      window.open(composeUrl, '_blank');
+        window.open(composeUrl, '_blank');
+      } catch (err) {
+        console.error('Failed to upload or share:', err);
+        alert('Error uploading meme. Please try again!');
+      }
     },
   }));
 
   return (
-    <div ref={containerRef} className="relative inline-block">
-      <img src={photoUrl} alt="Uploaded" className="max-w-full rounded-xl" />
+    <div ref={containerRef} className="relative inline-block rounded-xl overflow-hidden">
+      <img src={photoUrl} alt="Uploaded" className="max-w-full rounded-xl dark:border dark:border-gray-700" />
 
       <div
         ref={stickerRef}
