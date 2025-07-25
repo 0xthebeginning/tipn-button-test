@@ -17,13 +17,15 @@ export default function EditorPageClient() {
   }
 
   return (
-    <main className="min-h-screen bg-[#fefbf6] flex items-center justify-center px-4 py-10">
+    <main className="min-h-screen bg-[#f1fff0] flex items-center justify-center">
       {showTipping ? (
         <SampleDisplay />
       ) : (
-        <div className="w-full max-w-md bg-white border border-purple-200 rounded-3xl shadow-lg p-6 space-y-6 text-center">
-          <h1 className="text-3xl font-extrabold text-purple-700">🐶 Meme Your SuperInu Moment</h1>
-          <p className="text-gray-600 text-sm">
+        <div className="m-4 p-6 bg-white border-2 border-[#52a842] rounded-2xl shadow-lg space-y-6 text-center w-full max-w-md">
+          <h1 className="text-2xl font-extrabold bg-gradient-to-r from-[#52a842] to-[#4ccc84] text-transparent bg-clip-text">
+            🐶 Meme Your SuperInu Moment
+          </h1>
+          <p className="text-gray-700">
             Upload or snap a photo to start creating your personalized cast!
           </p>
 
@@ -31,12 +33,12 @@ export default function EditorPageClient() {
             type="file"
             accept="image/*"
             onChange={handlePhotoUpload}
-            className="w-full text-sm text-gray-600 file:bg-purple-600 file:hover:bg-purple-700 file:text-white file:rounded-full file:px-5 file:py-2 file:border-none"
+            className="w-full text-sm text-gray-700 file:bg-[#52a842] file:hover:bg-[#3e8d35] file:text-white file:rounded-lg file:px-4 file:py-2 file:border-none"
           />
 
           {photoURL && (
-            <div className="mt-4 space-y-4">
-              <p className="text-xs text-gray-500 uppercase tracking-wide">Preview with Sticker</p>
+            <div className="mt-4">
+              <p className="text-sm text-gray-500">PREVIEW WITH STICKER</p>
 
               <StickerOverlay
                 ref={stickerRef}
@@ -44,10 +46,10 @@ export default function EditorPageClient() {
                 stickerUrl="/superinuMain.png"
               />
 
-              <div className="flex gap-4">
+              <div className="flex gap-4 mt-4">
                 <button
                   onClick={() => stickerRef.current?.shareImage()}
-                  className="flex-1 py-2 rounded-full bg-green-600 text-white font-medium hover:bg-green-700 transition"
+                  className="flex-1 py-2 bg-[#52a842] text-white rounded-lg hover:bg-[#3e8d35] transition"
                 >
                   Share
                 </button>
@@ -55,7 +57,7 @@ export default function EditorPageClient() {
 
               <button
                 onClick={() => setShowTipping(true)}
-                className="w-full py-3 rounded-full bg-purple-600 text-white text-lg font-semibold hover:bg-purple-700 transition"
+                className="mt-4 w-full py-3 bg-[#52a842] text-white text-lg rounded-xl hover:bg-[#3e8d35] transition"
               >
                 Proceed to Tipping
               </button>
