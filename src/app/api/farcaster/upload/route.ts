@@ -1,25 +1,25 @@
 // src/app/api/farcaster/upload/route.ts
-import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
+import { NextRequest, NextResponse } from 'next/server';
 
-export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
-  const form = await req.formData();
-  const file = form.get('file') as File;
+  const formData = await req.formData();
+  const file = formData.get('file') as File;
 
   if (!file) {
     return NextResponse.json({ error: 'No file provided' }, { status: 400 });
   }
 
   try {
-    const blob = await put(file.name, file.stream(), {
-      access: 'public', // or 'private' if you want restricted access
+    const blob = await put(`memes/${file.name}`, file, {
+      access: 'public',
     });
 
     return NextResponse.json({ url: blob.url });
   } catch (err) {
-    console.error('Upload to Blob failed:', err);
+    console.error('Upload error:', err);
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   }
 }
