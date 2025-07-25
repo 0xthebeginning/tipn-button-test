@@ -1,6 +1,4 @@
 // src/app/layout.tsx
-'use client';
-
 import "~/app/globals.css";
 import type { Metadata } from "next";
 import { useEffect, useState } from "react";
