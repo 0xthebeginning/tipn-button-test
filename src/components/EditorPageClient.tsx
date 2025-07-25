@@ -1,6 +1,7 @@
 'use client';
-import { useRef, useState } from "react";
-import SampleDisplay from "./SampleDisplay";
+
+import { useRef, useState } from 'react';
+import SampleDisplay from './SampleDisplay';
 import StickerOverlay, { StickerOverlayHandle } from './StickerOverlay';
 
 export default function EditorPageClient() {
@@ -37,7 +38,7 @@ export default function EditorPageClient() {
           />
 
           {photoURL && (
-            <div className="mt-4">
+            <div className="mt-4 space-y-4">
               <p className="text-sm text-gray-500">PREVIEW WITH STICKER</p>
 
               <StickerOverlay
@@ -46,18 +47,18 @@ export default function EditorPageClient() {
                 stickerUrl="/superinuMain.png"
               />
 
-              <div className="flex gap-4 mt-4">
+              <div className="flex gap-4">
                 <button
                   onClick={() => stickerRef.current?.shareImage()}
                   className="flex-1 py-2 bg-[#52a842] text-white rounded-lg hover:bg-[#3e8d35] transition"
                 >
-                  Share
+                  Share to Warpcast
                 </button>
               </div>
 
               <button
                 onClick={() => setShowTipping(true)}
-                className="mt-4 w-full py-3 bg-[#52a842] text-white text-lg rounded-xl hover:bg-[#3e8d35] transition"
+                className="w-full py-3 bg-[#52a842] text-white text-lg rounded-xl hover:bg-[#3e8d35] transition"
               >
                 Proceed to Tipping
               </button>
