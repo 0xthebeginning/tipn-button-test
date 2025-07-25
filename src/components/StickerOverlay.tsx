@@ -21,6 +21,7 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
     top: 50,
     width: 100,
     height: 100,
+    rotation: 0, // NEW
   });
 
   useImperativeHandle(ref, () => ({
@@ -82,6 +83,7 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
           backgroundImage: `url(${stickerUrl})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
+          transform: `rotate(${frame.rotation}deg)`, // NEW
         }}
       />
 
@@ -90,18 +92,27 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
           target={stickerRef}
           draggable
           resizable
+          rotatable // NEW
           throttleDrag={1}
           throttleResize={1}
+          throttleRotate={1} // NEW
           onDrag={({ left, top }) => {
             setFrame((f) => ({ ...f, left, top }));
           }}
           onResize={({ width, height, drag }) => {
-            setFrame({
+            setFrame((f) => ({
+              ...f,
               width,
               height,
               left: drag.left,
               top: drag.top,
-            });
+            }));
+          }}
+          onRotate={({ beforeRotate }) => {
+            setFrame((f) => ({
+              ...f,
+              rotation: beforeRotate,
+            }));
           }}
         />
       )}
