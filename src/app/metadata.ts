@@ -1,7 +1,7 @@
 // src/app/page/metadata.ts
 import { Metadata } from "next";
 import { APP_NAME, APP_DESCRIPTION, APP_OG_IMAGE_URL } from "~/lib/constants";
-import { getMiniAppEmbedMetadata } from "~/lib/utils";
+//import { getMiniAppEmbedMetadata } from "~/lib/utils";
 
 export const generateMetadata = async (): Promise<Metadata> => {
   return {
