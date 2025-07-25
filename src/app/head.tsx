@@ -11,7 +11,9 @@ export default function Head() {
       <meta property="og:title" content="SuperInu" />
       <meta property="og:description" content="Create and share custom SuperInu memes!" />
       <meta property="og:image" content={APP_OG_IMAGE_URL} />
-      <meta name="fc:frame" content={JSON.stringify(embed)} />
+      
+      {/* Required for Farcaster Embed */}
+      <meta property="fc:frame" content="vNext" />
     </>
   );
 }
