@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+// GET handler for Mini App manifest
 export async function GET() {
   return NextResponse.json(
     {
@@ -33,4 +34,9 @@ export async function GET() {
       },
     }
   );
+}
+
+// POST handler for frame interactions
+export async function POST() {
+  return NextResponse.json({ message: "Frame POST received" });
 }
