@@ -42,14 +42,12 @@ export default function EditorPageClient() {
               stickerUrl="/superinuMain.png"
             />
 
-            <div className="flex gap-4">
-              <button
-                onClick={() => stickerRef.current?.shareImage()}
-                className="flex-1 py-2 bg-[#52a842] hover:bg-[#3e8d35] text-white rounded-lg transition"
-              >
-                Post to Farcaster
-              </button>
-            </div>
+            <button
+              onClick={() => stickerRef.current?.shareImage()}
+              className="w-full py-3 bg-[#52a842] hover:bg-[#3e8d35] text-white text-lg rounded-xl transition"
+            >
+              Share to Feed
+            </button>
           </div>
         )}
       </div>
