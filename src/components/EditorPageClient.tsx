@@ -52,7 +52,7 @@ export default function EditorPageClient() {
                   onClick={() => stickerRef.current?.shareImage()}
                   className="flex-1 py-2 bg-[#52a842] text-white rounded-lg hover:bg-[#3e8d35] transition"
                 >
-                  Share to Warpcast
+                  Post to Farcaster
                 </button>
               </div>
 

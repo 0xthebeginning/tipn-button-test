@@ -29,24 +29,28 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
       if (!containerRef.current) return;
 
       setHideControls(true);
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
+      await new Promise((r) => setTimeout(r, 100));
       const canvas = await html2canvas(containerRef.current);
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve)
-      );
-
-      if (!blob) {
-        console.error('Failed to generate image blob');
-        setHideControls(false);
-        return;
-      }
-
-      const castText = `Made a SuperInu meme! 🐶✨\n\nTry it: https://superinu-miniapp.vercel.app`;
-      const intentUrl = `https://client.neynar.com/intent/cast?text=${encodeURIComponent(castText)}`;
-
-      window.open(intentUrl, '_blank');
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve));
       setHideControls(false);
+      if (!blob) return;
+
+      const formData = new FormData();
+      formData.append('file', blob, 'superinu.png');
+
+      const uploadRes = await fetch('/api/farcaster/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const { url } = await uploadRes.json();
+
+      const castText = 'Made this SuperInu meme 🐶✨';
+      const composeUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(
+        castText + '\n\nTry it here: https://superinu-miniapp.vercel.app'
+      )}&embeds[]=${encodeURIComponent(url)}`;
+
+      window.open(composeUrl, '_blank');
     },
   }));
 
