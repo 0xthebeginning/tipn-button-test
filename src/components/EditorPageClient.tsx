@@ -19,8 +19,7 @@ export default function EditorPageClient() {
   async function handleBuy() {
     try {
       await sdk.actions.swapToken({
-        sellToken: 'eip155:8453/erc20:0x4200000000000000000000000000000000000006', // ETH on Base
-        buyToken: 'eip155:8453/erc20:0x063eDA1b84ceaF79b8cC4a41658b449e8E1F9Eeb',
+        buyToken: 'eip155:8453/erc20:0x063eDA1b84ceaF79b8cC4a41658b449e8E1F9Eeb'
       });
     } catch (err) {
       console.error('Swap failed or was cancelled:', err);
