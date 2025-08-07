@@ -61,7 +61,7 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
 
       const castText = 'Made this $SuperInu Moment 🐶✨ on @terricola.eth\'s miniapp! Try it! https://superinu-miniapp.vercel.app';
       const webLink = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(url)}`;
-      const deepLink = `warpcast://compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(url)}`;
+      const deepLink = `farcaster://compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(url)}`;
 
       // Try deep link first
       window.location.href = deepLink;
