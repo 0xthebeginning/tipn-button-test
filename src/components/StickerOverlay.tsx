@@ -1,4 +1,3 @@
-// components/StickerOverlay.tsx
 'use client';
 
 import html2canvas from 'html2canvas';
@@ -17,6 +16,7 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
   const containerRef = useRef<HTMLDivElement>(null);
   const stickerRef = useRef<HTMLDivElement>(null);
   const [hideControls, setHideControls] = useState(false);
+  const [isMirrored, setIsMirrored] = useState(false);
 
   const [frame, setFrame] = useState({
     left: 50,
@@ -62,7 +62,6 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
 
       const castText = `Made this $SuperInu Moment 🐶✨ on @terricola.eth's miniapp! Try it!`;
       const miniappUrl = 'https://farcaster.xyz/miniapps/8CEpD-h8a_uW/superinu';
-
       const finalCast = `${castText}\n\n${miniappUrl}`.trim();
 
       try {
@@ -100,38 +99,46 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
           backgroundImage: `url(${stickerUrl})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          transform: `rotate(${frame.rotation}deg)`,
+          transform: `rotate(${frame.rotation}deg) ${isMirrored ? 'scaleX(-1)' : ''}`,
         }}
       />
 
       {!hideControls && (
-        <Moveable
-          target={stickerRef}
-          draggable
-          resizable
-          rotatable
-          throttleDrag={1}
-          throttleResize={1}
-          throttleRotate={1}
-          onDrag={({ left, top }) => {
-            setFrame((f) => ({ ...f, left, top }));
-          }}
-          onResize={({ width, height, drag }) => {
-            setFrame((f) => ({
-              ...f,
-              width,
-              height,
-              left: drag.left,
-              top: drag.top,
-            }));
-          }}
-          onRotate={({ beforeRotate }) => {
-            setFrame((f) => ({
-              ...f,
-              rotation: beforeRotate,
-            }));
-          }}
-        />
+        <>
+          <Moveable
+            target={stickerRef}
+            draggable
+            resizable
+            rotatable
+            throttleDrag={1}
+            throttleResize={1}
+            throttleRotate={1}
+            onDrag={({ left, top }) => {
+              setFrame((f) => ({ ...f, left, top }));
+            }}
+            onResize={({ width, height, drag }) => {
+              setFrame((f) => ({
+                ...f,
+                width,
+                height,
+                left: drag.left,
+                top: drag.top,
+              }));
+            }}
+            onRotate={({ beforeRotate }) => {
+              setFrame((f) => ({
+                ...f,
+                rotation: beforeRotate,
+              }));
+            }}
+          />
+          <button
+            onClick={() => setIsMirrored((prev) => !prev)}
+            className="absolute bottom-2 right-2 px-3 py-1 bg-white dark:bg-gray-800 text-xs text-gray-800 dark:text-white border rounded shadow"
+          >
+            {isMirrored ? 'Unmirror Sticker' : 'Mirror Sticker'}
+          </button>
+        </>
       )}
     </div>
   );
