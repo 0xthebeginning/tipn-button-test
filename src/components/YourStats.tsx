@@ -2,87 +2,56 @@
 
 import { useEffect, useState } from 'react';
 
-const SUPERINU_TOKEN = '0x063eDA1b84ceaF79b8cC4a41658b449e8E1F9Eeb'; // Base chain
-const BASE_RPC = 'https://mainnet.base.org'; // Or use Alchemy/Infura if rate limits become an issue
+const NEYNAR_API_KEY = process.env.NEXT_PUBLIC_NEYNAR_API_KEY!;
 
 export default function YourStats() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [wallets, setWallets] = useState<string[]>([]);
   const [isHolder, setIsHolder] = useState(false);
   const [isStaker, setIsStaker] = useState(false);
 
   useEffect(() => {
-    async function checkWallets() {
+    async function fetchViewerAndWallets() {
       try {
-        const viewerRes = await fetch('https://api.neynar.com/v2/farcaster/user/viewer', {
-        headers: {
-            'Content-Type': 'application/json',
-            'api-key': process.env.NEXT_PUBLIC_NEYNAR_API_KEY || '',
-        },
-        credentials: 'include',
+        // Step 1: get viewer (currently logged in user)
+        const viewerRes = await fetch(`https://api.neynar.com/v2/farcaster/user`, {
+          headers: { 'api-key': NEYNAR_API_KEY },
         });
 
-        const viewerData = await viewerRes.json();
-        const fid = viewerData.user?.fid;
+        const viewer = await viewerRes.json();
+        const fid = viewer.result?.user?.fid;
 
-        if (!fid) return;
+        if (!fid) {
+          console.warn('No FID returned from viewer endpoint');
+          return;
+        }
 
-        const res = await fetch(
-          `https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`,
-          {
-            headers: {
-              'api-key': process.env.NEXT_PUBLIC_NEYNAR_API_KEY || '',
-            },
-          }
-        );
+        // Step 2: get wallet info
+        const userRes = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`, {
+          headers: { 'api-key': NEYNAR_API_KEY },
+        });
 
-        const data = await res.json();
-        const user = data.users?.[0];
-        const wallets: string[] = user?.verifications || [];
+        const userData = await userRes.json();
+        const user = userData.users?.[0];
+        const verifiedWallets = user?.verifications || [];
 
-        if (!wallets.length) return;
+        if (verifiedWallets.length > 0) {
+          setWallets(verifiedWallets);
+          setWalletAddress(verifiedWallets[0]);
 
-        setWalletAddress(wallets[0]);
+          // ✅ Replace this with real SuperInu holders check
+          const isTestHolder = verifiedWallets.some(addr =>
+            addr.toLowerCase() === '0xYourTestHolderAddress'.toLowerCase()
+          );
 
-        // Check token balance for each wallet
-        const checks = await Promise.all(
-          wallets.map(async (addr) => {
-            const body = {
-              jsonrpc: '2.0',
-              id: 1,
-              method: 'eth_call',
-              params: [
-                {
-                  to: SUPERINU_TOKEN,
-                  data:
-                    '0x70a08231000000000000000000000000' + addr.slice(2).toLowerCase(),
-                },
-                'latest',
-              ],
-            };
-
-            const response = await fetch(BASE_RPC, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
-            });
-
-            const json = await response.json();
-            const balanceHex = json.result;
-            const balance = parseInt(balanceHex, 16);
-            return balance > 0;
-          })
-        );
-
-        const anyHold = checks.some((v) => v);
-        setIsHolder(anyHold);
-        setIsStaker(false); // Optional: implement real staking check
-
+          setIsHolder(isTestHolder);
+        }
       } catch (err) {
-        console.error('Failed to check holder status:', err);
+        console.error('Error fetching wallets:', err);
       }
     }
 
-    checkWallets();
+    fetchViewerAndWallets();
   }, []);
 
   return (
@@ -94,12 +63,8 @@ export default function YourStats() {
           <p className="text-sm text-gray-600 dark:text-gray-300 break-all">
             Primary Wallet: <span className="font-mono">{walletAddress}</span>
           </p>
-          <p className="mt-2 text-sm">
-            ✅ Holder: {isHolder ? 'Yes' : 'No'}
-          </p>
-          <p className="text-sm">
-            🔒 Staker: {isStaker ? 'Yes' : 'No'}
-          </p>
+          <p className="mt-2 text-sm">✅ Holder: {isHolder ? 'Yes' : 'No'}</p>
+          <p className="text-sm">🔒 Staker: {isStaker ? 'Yes' : 'No'}</p>
         </>
       ) : (
         <p className="text-sm text-gray-500">No wallet connected yet.</p>
