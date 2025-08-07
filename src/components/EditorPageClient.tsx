@@ -96,7 +96,7 @@ export default function EditorPageClient() {
             <StickerOverlay
               ref={stickerRef}
               photoUrl={photoURL}
-              stickerUrl="/superinuMain.png"
+              stickerUrl="/superinuMain2.png"
             />
 
             <button
