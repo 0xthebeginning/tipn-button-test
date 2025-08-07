@@ -46,14 +46,12 @@ export default function EditorPageClient() {
             >
               Buy Now
             </button>
-            <a
-              href="https://farcaster.xyz/miniapps/tmjNyAmp7nkC/streme"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg"
+            <button
+              onClick={() => sdk.actions?.openUrl?.('https://farcaster.xyz/miniapps/8CEpD-h8a_uW/stake')}
+              className="text-purple-900 dark:text-purple-200 underline font-medium"
             >
               Stake Now
-            </a>
+            </button>
           </div>
         </div>
 
