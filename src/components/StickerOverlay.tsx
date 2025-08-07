@@ -92,21 +92,29 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
     <div ref={containerRef} className="relative inline-block rounded-xl overflow-hidden">
       <img src={photoUrl} alt="Uploaded" className="max-w-full rounded-xl dark:border dark:border-gray-700" />
 
-      <div
-        ref={stickerRef}
+    <div
+      ref={stickerRef}
+      style={{
+        position: 'absolute',
+        left: frame.left,
+        top: frame.top,
+        width: frame.width,
+        height: frame.height,
+        transform: `rotate(${frame.rotation}deg)`,
+        overflow: 'hidden',
+      }}
+    >
+      <img
+        src={stickerUrl}
+        alt="Sticker"
         style={{
-          position: 'absolute',
-          left: frame.left,
-          top: frame.top,
-          width: frame.width,
-          height: frame.height,
-          backgroundImage: `url(${stickerUrl})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          transform: `rotate(${frame.rotation}deg) ${isMirrored ? 'scaleX(-1)' : ''}`,
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain',
           imageRendering: 'crisp-edges',
         }}
       />
+    </div>
 
       {!hideControls && (
         <>
