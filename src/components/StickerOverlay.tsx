@@ -1,9 +1,9 @@
 'use client';
 
 import html2canvas from 'html2canvas';
-import { useRef, useState, useImperativeHandle, forwardRef } from 'react';
+import { useRef, useState, useImperativeHandle, forwardRef, useEffect } from 'react';
 import Moveable from 'react-moveable';
-import sdk from "@farcaster/miniapp-sdk";
+import sdk from '@farcaster/miniapp-sdk';
 
 export interface StickerOverlayHandle {
   shareImage: () => void;
@@ -16,6 +16,7 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
   const containerRef = useRef<HTMLDivElement>(null);
   const stickerRef = useRef<HTMLDivElement>(null);
   const [hideControls, setHideControls] = useState(false);
+  const [showMoveable, setShowMoveable] = useState(true);
   const [isMirrored, setIsMirrored] = useState(false);
 
   const [frame, setFrame] = useState({
@@ -25,6 +26,21 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
     height: 100,
     rotation: 0,
   });
+
+  // Listen for clicks outside the sticker to hide controls
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (
+        stickerRef.current &&
+        !stickerRef.current.contains(e.target as Node)
+      ) {
+        setShowMoveable(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   useImperativeHandle(ref, () => ({
     shareImage: async () => {
@@ -39,7 +55,6 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
       });
 
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve));
-
       setHideControls(false);
       if (!blob) {
         alert('Failed to generate image');
@@ -70,13 +85,11 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
 
       try {
         if (sdk?.actions?.composeCast) {
-          console.log('✅ Using @farcaster/miniapp-sdk to composeCast');
           await sdk.actions.composeCast({
             text: finalCast,
             embeds: [imageUrl],
           });
         } else {
-          console.warn('❌ SDK not available. Falling back to desktop URL');
           const castUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(finalCast)}&embeds[]=${encodeURIComponent(imageUrl)}`;
           window.open(castUrl, '_blank');
         }
@@ -90,39 +103,50 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
 
   return (
     <div ref={containerRef} className="relative inline-block rounded-xl overflow-hidden">
-      <img src={photoUrl} alt="Uploaded" className="max-w-full rounded-xl dark:border dark:border-gray-700" />
-
-    <div
-      ref={stickerRef}
-      style={{
-        position: 'absolute',
-        left: frame.left,
-        top: frame.top,
-        width: frame.width,
-        height: frame.height,
-        transform: `rotate(${frame.rotation}deg)`,
-        overflow: 'hidden',
-      }}
-    >
       <img
-        src={stickerUrl}
-        alt="Sticker"
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'contain',
-          imageRendering: 'crisp-edges',
-        }}
+        src={photoUrl}
+        alt="Uploaded"
+        className="max-w-full rounded-xl dark:border dark:border-gray-700"
       />
-    </div>
 
-      {!hideControls && (
+      <div
+        ref={stickerRef}
+        onMouseDown={() => setShowMoveable(true)}
+        style={{
+          position: 'absolute',
+          left: frame.left,
+          top: frame.top,
+          width: frame.width,
+          height: frame.height,
+          transform: `
+            rotate(${frame.rotation}deg)
+            ${isMirrored ? 'scaleX(-1)' : ''}
+          `,
+          transformOrigin: 'center',
+          overflow: 'hidden',
+          cursor: 'pointer',
+        }}
+      >
+        <img
+          src={stickerUrl}
+          alt="Sticker"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            imageRendering: 'crisp-edges',
+          }}
+        />
+      </div>
+
+      {!hideControls && showMoveable && (
         <>
           <Moveable
             target={stickerRef}
             draggable
             resizable
             rotatable
+            keepRatio={true}
             throttleDrag={1}
             throttleResize={1}
             throttleRotate={1}
