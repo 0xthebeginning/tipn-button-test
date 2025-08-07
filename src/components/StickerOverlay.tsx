@@ -57,19 +57,14 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
         return;
       }
 
-      const { url } = await uploadRes.json();
+      const { url: blobUrl } = await uploadRes.json();
 
       const castText = 'Made this $SuperInu Moment 🐶✨ on @terricola.eth\'s miniapp! Try it! https://superinu-miniapp.vercel.app';
-      const webLink = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(url)}`;
-      const deepLink = `farcaster://compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(url)}`;
+      const encodedUrl = encodeURIComponent(blobUrl);
 
-      // Try deep link first
-      window.location.href = deepLink;
+      const universalLink = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds=${encodedUrl}`;
 
-      // Optionally fallback after timeout
-      setTimeout(() => {
-        window.location.href = webLink;
-      }, 1000);
+      window.location.href = universalLink;
     },
   }));
 
