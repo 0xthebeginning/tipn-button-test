@@ -2,26 +2,44 @@
 
 import { useEffect, useState } from 'react';
 
-declare global {
-  interface Window {
-    farcaster?: {
-      viewer?: {
-        fid: number;
-      };
-    };
-  }
+interface NeynarUserResponse {
+  user: {
+    fid: number;
+  };
 }
 
 export default function YourStats() {
   const [fid, setFid] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const viewer = window.farcaster?.viewer;
-    if (viewer?.fid) {
-      setFid(viewer.fid);
-    } else {
-      console.warn('No viewer or FID found on window.farcaster');
+    async function fetchFid() {
+      try {
+        const res = await fetch('https://api.neynar.com/v2/farcaster/user', {
+          headers: {
+            'Content-Type': 'application/json',
+            'api-key': process.env.NEXT_PUBLIC_NEYNAR_API_KEY!,
+          },
+          credentials: 'include',
+        });
+
+        if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+
+        const data: NeynarUserResponse = await res.json();
+        const fetchedFid = data?.user?.fid;
+
+        if (fetchedFid) {
+          setFid(fetchedFid);
+        } else {
+          setError('FID not found in response');
+        }
+      } catch (err: unknown) {
+        console.error('Failed to fetch FID from Neynar:', err);
+        setError('Error fetching FID');
+      }
     }
+
+    fetchFid();
   }, []);
 
   return (
@@ -32,10 +50,10 @@ export default function YourStats() {
         <p className="text-sm text-green-600 dark:text-green-300 font-mono">
           Your FID: {fid}
         </p>
+      ) : error ? (
+        <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
       ) : (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          FID not found
-        </p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
       )}
     </div>
   );
