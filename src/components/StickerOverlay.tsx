@@ -60,23 +60,26 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
 
       const { url: imageUrl } = await uploadRes.json();
 
-      const castText = `Made this $SuperInu Moment 🐶✨ on @terricola.eth's miniapp!\nhttps://farcaster.xyz/miniapps/8CEpD-h8a_uW/superinu`;
+      const castText = `Made this $SuperInu Moment 🐶✨ on @terricola.eth's miniapp! Try it!`;
+      const miniappUrl = 'https://farcaster.xyz/miniapps/8CEpD-h8a_uW/superinu';
+
+      const finalCast = `${castText}\n\n${miniappUrl}`.trim(); // remove any trailing space/newline
 
       try {
         if (sdk?.actions?.composeCast) {
           console.log('✅ Using @farcaster/miniapp-sdk to composeCast');
           await sdk.actions.composeCast({
-            text: castText,
+            text: finalCast,
             embeds: [imageUrl],
           });
         } else {
           console.warn('❌ SDK not available. Falling back to desktop URL');
-          const castUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(imageUrl)}`;
+          const castUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(finalCast)}&embeds[]=${encodeURIComponent(imageUrl)}`;
           window.open(castUrl, '_blank');
         }
       } catch (err) {
         console.error('Cast share failed:', err);
-        const fallbackUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(imageUrl)}`;
+        const fallbackUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(finalCast)}&embeds[]=${encodeURIComponent(imageUrl)}`;
         window.open(fallbackUrl, '_blank');
       }
     },
