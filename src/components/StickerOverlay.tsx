@@ -63,7 +63,7 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
       const castText = `Made this $SuperInu Moment 🐶✨ on @terricola.eth's miniapp! Try it!`;
       const miniappUrl = 'https://farcaster.xyz/miniapps/8CEpD-h8a_uW/superinu';
 
-      const finalCast = `${castText}\n\n${miniappUrl}`.trim(); // remove any trailing space/newline
+      const finalCast = `${castText}\n\n${miniappUrl}`.trim();
 
       try {
         if (sdk?.actions?.composeCast) {
