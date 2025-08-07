@@ -2,26 +2,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
 
-export const runtime = 'edge'; // preferred for performance
+export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
-    const file = formData.get('file');
+    const file = formData.get('file') as File;
 
-    if (!(file instanceof File)) {
-      return NextResponse.json({ error: 'Invalid or missing file' }, { status: 400 });
+    if (!file) {
+      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
 
-    const blob = await put(`superinu-${Date.now()}.png`, file, {
+    const arrayBuffer = await file.arrayBuffer();
+
+    const blob = await put(`superinu-${Date.now()}.png`, arrayBuffer, {
       access: 'public',
       contentType: file.type || 'image/png',
     });
 
     return NextResponse.json({ url: blob.url });
-  } catch (err) {
+  } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Upload failed';
-    console.error('Upload failed:', message);
+    console.error('Upload failed:', err); // <-- This is critical to inspect on Vercel logs
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
