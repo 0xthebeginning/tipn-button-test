@@ -63,7 +63,7 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
         `${castText}\n\nTry it here: https://superinu-miniapp.vercel.app`
       )}&embeds[]=${encodeURIComponent(url)}`;
 
-      window.open(composeUrl, '_blank');
+      window.location.href = composeUrl;
     },
   }));
 
