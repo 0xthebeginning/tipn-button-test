@@ -6,9 +6,9 @@ const NEYNAR_API_KEY = process.env.NEXT_PUBLIC_NEYNAR_API_KEY!;
 
 export default function YourStats() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [wallets, setWallets] = useState<string[]>([]);
+  //const [wallets, setWallets] = useState<string[]>([]);
   const [isHolder, setIsHolder] = useState(false);
-  const [isStaker, setIsStaker] = useState(false);
+  //const [isStaker, setIsStaker] = useState(false);
 
   useEffect(() => {
     async function fetchViewerAndWallets() {
