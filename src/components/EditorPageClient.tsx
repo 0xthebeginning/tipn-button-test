@@ -61,7 +61,8 @@ export default function EditorPageClient() {
           🐶 Meme Your SuperInu Moment
         </h1>
         <p className="text-gray-700 dark:text-gray-300">
-          Upload or snap a photo to start creating your personalized SuperInu image! You'll be able to share it to your friends once you're done!
+          Upload or snap a photo to start creating your personalized SuperInu image!<br />
+          You will be able to share it to your friends once you are ready!
         </p>
 
         <input
