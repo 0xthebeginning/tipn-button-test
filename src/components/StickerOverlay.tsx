@@ -33,7 +33,11 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
       setHideControls(true);
       await new Promise((r) => setTimeout(r, 100));
 
-      const canvas = await html2canvas(containerRef.current);
+      const pixelRatio = window.devicePixelRatio || 2;
+      const canvas = await html2canvas(containerRef.current, {
+        scale: pixelRatio,
+      });
+      
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve));
 
       setHideControls(false);
