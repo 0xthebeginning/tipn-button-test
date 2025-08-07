@@ -6,19 +6,6 @@ import { useRef, useState, useImperativeHandle, forwardRef } from 'react';
 import Moveable from 'react-moveable';
 import sdk from "@farcaster/miniapp-sdk";
 
-declare global {
-  interface Window {
-    farcaster?: {
-      actions?: {
-        composeCast: (args: {
-          text: string;
-          embeds?: string[];
-        }) => Promise<void>;
-      };
-    };
-  }
-}
-
 export interface StickerOverlayHandle {
   shareImage: () => void;
 }
@@ -72,18 +59,18 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
       }
 
       const { url: imageUrl } = await uploadRes.json();
-      
-      const castText = `Made this $SuperInu Moment 🐶✨ on @terricola.eth's miniapp! Try it! https://superinu-miniapp.vercel.app`;
+
+      const castText = `Made this $SuperInu Moment 🐶✨ on @terricola.eth's miniapp! Try it! https://superinu-miniapp.vercel.app \n`;
 
       try {
-        if (typeof window !== 'undefined' && 'farcaster' in window && sdk?.actions) {
-          // ✅ In mobile miniapp, use SDK
+        if (sdk?.actions?.composeCast) {
+          console.log('✅ Using @farcaster/miniapp-sdk to composeCast');
           await sdk.actions.composeCast({
             text: castText,
             embeds: [imageUrl],
           });
         } else {
-          // ✅ Desktop fallback
+          console.warn('❌ SDK not available. Falling back to desktop URL');
           const castUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(imageUrl)}`;
           window.open(castUrl, '_blank');
         }
