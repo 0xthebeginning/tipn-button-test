@@ -18,6 +18,17 @@ export default function EditorPageClient() {
   return (
     <main className="min-h-screen bg-[#f1fff0] dark:bg-gray-900 flex items-center justify-center transition-colors">
       <div className="m-4 p-6 bg-white dark:bg-gray-800 border-2 border-[#52a842] dark:border-[#4ccc84] rounded-2xl shadow-lg space-y-6 text-center w-full max-w-md transition-colors">
+        
+        {/* 🟣 About Section */}
+        <div className="p-4 rounded-xl bg-purple-100 dark:bg-purple-900 text-center">
+          <h2 className="text-xl font-bold text-purple-800 dark:text-purple-200 mb-1">
+            About SuperInu Moments
+          </h2>
+          <p className="text-sm text-purple-700 dark:text-purple-300">
+            Meme your moment with $SuperInu! Upload a photo, add a sticker, and instantly cast it to your Farcaster feed. Built by @terricola.eth with the Farcaster Mini App SDK.
+          </p>
+        </div>
+
         <h1 className="text-2xl font-extrabold bg-gradient-to-r from-[#52a842] to-[#4ccc84] text-transparent bg-clip-text dark:from-[#bbf7d0] dark:to-[#86efac]">
           🐶 Meme Your SuperInu Moment
         </h1>
