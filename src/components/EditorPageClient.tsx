@@ -25,8 +25,7 @@ export default function EditorPageClient() {
             About SuperInu
           </h2>
           <p className="text-sm text-purple-700 dark:text-purple-300">
-            $SuperInu is a memecoin launched on streme.fun by @terricola.eth!
-            CA: 0x063eda1b84ceaf79b8cc4a41658b449e8e1f9eeb
+            $SuperInu is a fun memecoin launched on streme.fun!\nYou can stake it to earn more + $SUP!\nBuy Now | Stake Now
           </p>
         </div>
 
