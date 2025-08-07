@@ -60,7 +60,7 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
 
       const { url: imageUrl } = await uploadRes.json();
 
-      const castText = `Made this $SuperInu Moment 🐶✨ on @terricola.eth's miniapp! Try it! https://superinu-miniapp.vercel.app \n`;
+      const castText = `Made this $SuperInu Moment 🐶✨ on @terricola.eth's miniapp! Try it! https://warpcast.com/~/miniapps/superinu`;
 
       try {
         if (sdk?.actions?.composeCast) {
