@@ -37,7 +37,7 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
       const canvas = await html2canvas(containerRef.current, {
         scale: pixelRatio,
       });
-      
+
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve));
 
       setHideControls(false);
@@ -104,6 +104,7 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           transform: `rotate(${frame.rotation}deg) ${isMirrored ? 'scaleX(-1)' : ''}`,
+          imageRendering: 'crisp-edges',
         }}
       />
 
