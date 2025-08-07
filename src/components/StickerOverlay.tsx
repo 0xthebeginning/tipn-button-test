@@ -5,6 +5,19 @@ import html2canvas from 'html2canvas';
 import { useRef, useState, useImperativeHandle, forwardRef } from 'react';
 import Moveable from 'react-moveable';
 
+declare global {
+  interface Window {
+    farcaster?: {
+      actions?: {
+        composeCast: (args: {
+          text: string;
+          embeds?: string[];
+        }) => Promise<void>;
+      };
+    };
+  }
+}
+
 export interface StickerOverlayHandle {
   shareImage: () => void;
 }
@@ -58,12 +71,31 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
       }
 
       const { url: imageUrl } = await uploadRes.json();
+      const castText = `Made this $SuperInu Moment 🐶✨ on @terricola.eth's miniapp! Try it! https://superinu-miniapp.vercel.app`;
 
-      const castText = 'Made this $SuperInu Moment 🐶✨ on @terricola.eth\'s miniapp! Try it! https://superinu-miniapp.vercel.app';
-
-      const castUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(imageUrl)}`;
-
-      window.open(castUrl, '_blank');
+      if (window?.farcaster?.actions?.composeCast) {
+        try {
+          await window.farcaster.actions.composeCast({
+            text: castText,
+            embeds: [imageUrl],
+          });
+        } catch (error) {
+          console.error("Error composing cast via SDK:", error);
+          window.open(
+            `https://warpcast.com/~/compose?text=${encodeURIComponent(
+              castText
+            )}&embeds[]=${encodeURIComponent(imageUrl)}`,
+            "_blank"
+          );
+        }
+      } else {
+        window.open(
+          `https://warpcast.com/~/compose?text=${encodeURIComponent(
+            castText
+          )}&embeds[]=${encodeURIComponent(imageUrl)}`,
+          "_blank"
+        );
+      }
     },
   }));
 
