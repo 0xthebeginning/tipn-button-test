@@ -59,7 +59,7 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
 
       const { url } = await uploadRes.json();
 
-      const castText = 'Made this $SuperInu meme 🐶✨';
+      const castText = 'Made this $SuperInu Moment 🐶✨ on @terricola.eth\'s miniapp! Try it! https://superinu-miniapp.vercel.app/';
       const webLink = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(url)}`;
       const deepLink = `warpcast://compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(url)}`;
 
