@@ -22,10 +22,11 @@ export default function EditorPageClient() {
         {/* 🟣 About Section */}
         <div className="p-4 rounded-xl bg-purple-100 dark:bg-purple-900 text-center">
           <h2 className="text-xl font-bold text-purple-800 dark:text-purple-200 mb-1">
-            About SuperInu Moments
+            About SuperInu
           </h2>
           <p className="text-sm text-purple-700 dark:text-purple-300">
-            Meme your moment with $SuperInu! Upload a photo, add a sticker, and instantly cast it to your Farcaster feed. Built by @terricola.eth with the Farcaster Mini App SDK.
+            $SuperInu is a memecoin launched on streme.fun by @terricola.eth!
+            CA: 0x063eda1b84ceaf79b8cc4a41658b449e8e1f9eeb
           </p>
         </div>
 
