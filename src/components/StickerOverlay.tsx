@@ -60,11 +60,10 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
       const { url: blobUrl } = await uploadRes.json();
 
       const castText = 'Made this $SuperInu Moment 🐶✨ on @terricola.eth\'s miniapp! Try it! https://superinu-miniapp.vercel.app';
-      const encodedUrl = encodeURIComponent(blobUrl);
 
-      const universalLink = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds=${encodedUrl}`;
+      const castUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(imageUrl)}`;
 
-      window.location.href = universalLink;
+      window.open(castUrl, '_blank'); // Opens in same tab or new tab depending on context
     },
   }));
 
