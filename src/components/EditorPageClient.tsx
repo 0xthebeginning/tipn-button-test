@@ -7,6 +7,7 @@ import sdk from '@farcaster/miniapp-sdk';
 export default function EditorPageClient() {
   const [photoURL, setPhotoURL] = useState<string | null>(null);
   const stickerRef = useRef<StickerOverlayHandle>(null);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
 
   function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -19,48 +20,58 @@ export default function EditorPageClient() {
   async function handleBuy() {
     try {
       await sdk.actions.swapToken({
-        buyToken: 'eip155:8453/erc20:0x063eDA1b84ceaF79b8cC4a41658b449e8E1F9Eeb'
+        buyToken: 'eip155:8453/erc20:0x063eDA1b84ceaF79b8cC4a41658b449e8E1F9Eeb',
       });
     } catch (err) {
       console.error('Swap failed or was cancelled:', err);
     }
   }
 
+  async function handleStake() {
+    try {
+      await sdk.actions.openMiniApp({
+        url: 'https://farcaster.xyz/miniapps/tmjNyAmp7nkC/streme',
+      });
+    } catch (err) {
+      console.error('Open MiniApp failed:', err);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-[#f1fff0] dark:bg-gray-900 flex items-center justify-center transition-colors">
       <div className="m-4 p-6 bg-white dark:bg-gray-800 border-2 border-[#52a842] dark:border-[#4ccc84] rounded-2xl shadow-lg space-y-6 text-center w-full max-w-md transition-colors">
-        
-        {/* 🟣 About Section */}
+
+        {/* 🟣 Expandable About Section */}
         <div className="p-4 rounded-xl bg-purple-100 dark:bg-purple-900 text-center">
-          <h2 className="text-xl font-bold text-purple-800 dark:text-purple-200 mb-1">
-            About SuperInu
-          </h2>
-          <p className="text-sm text-purple-700 dark:text-purple-300 mb-2">
-            $SuperInu is a fun memecoin launched on streme.fun!<br />
-            You can stake it to earn more + $SUP
-          </p>
-          <div className="flex justify-center gap-4">
-            <button
-              onClick={handleBuy}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg"
-            >
-              Buy Now
-            </button>
-            <button
-              onClick={async () => {
-                try {
-                  await sdk.actions.openMiniApp({
-                    url: 'https://farcaster.xyz/miniapps/tmjNyAmp7nkC/streme',
-                  });
-                } catch (err) {
-                  console.error("Open MiniApp failed:", err);
-                }
-              }}
-              className="text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-1 rounded-lg text-sm"
-            >
-              Stake Now
-            </button>
-          </div>
+          <button
+            onClick={() => setIsAboutOpen(!isAboutOpen)}
+            className="text-xl font-bold text-purple-800 dark:text-purple-200 mb-1 focus:outline-none"
+          >
+            About SuperInu {isAboutOpen ? '▲' : '▼'}
+          </button>
+
+          {isAboutOpen && (
+            <>
+              <p className="text-sm text-purple-700 dark:text-purple-300 mt-2 mb-4">
+                $SuperInu is a fun memecoin launched on streme.fun!<br />
+                You can stake it to earn more + $SUP
+              </p>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={handleBuy}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg"
+                >
+                  Buy Now
+                </button>
+                <button
+                  onClick={handleStake}
+                  className="text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-1 rounded-lg text-sm"
+                >
+                  Stake Now
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         <h1 className="text-2xl font-extrabold bg-gradient-to-r from-[#52a842] to-[#4ccc84] text-transparent bg-clip-text dark:from-[#bbf7d0] dark:to-[#86efac]">
