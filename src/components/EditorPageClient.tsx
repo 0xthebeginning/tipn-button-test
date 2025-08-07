@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import StickerOverlay, { StickerOverlayHandle } from './StickerOverlay';
+import sdk from '@farcaster/miniapp-sdk';
 
 export default function EditorPageClient() {
   const [photoURL, setPhotoURL] = useState<string | null>(null);
@@ -15,6 +16,17 @@ export default function EditorPageClient() {
     }
   }
 
+  async function handleBuy() {
+    try {
+      await sdk.actions.swapToken({
+        sellToken: 'eip155:8453/erc20:0x4200000000000000000000000000000000000006', // ETH on Base
+        buyToken: 'eip155:8453/erc20:0x063eDA1b84ceaF79b8cC4a41658b449e8E1F9Eeb',
+      });
+    } catch (err) {
+      console.error('Swap failed or was cancelled:', err);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-[#f1fff0] dark:bg-gray-900 flex items-center justify-center transition-colors">
       <div className="m-4 p-6 bg-white dark:bg-gray-800 border-2 border-[#52a842] dark:border-[#4ccc84] rounded-2xl shadow-lg space-y-6 text-center w-full max-w-md transition-colors">
@@ -24,11 +36,26 @@ export default function EditorPageClient() {
           <h2 className="text-xl font-bold text-purple-800 dark:text-purple-200 mb-1">
             About SuperInu
           </h2>
-          <p className="text-sm text-purple-700 dark:text-purple-300">
+          <p className="text-sm text-purple-700 dark:text-purple-300 mb-2">
             $SuperInu is a fun memecoin launched on streme.fun!<br />
-            You can stake it to earn more + $SUP<br />
-            Buy Now | Stake Now
+            You can stake it to earn more + $SUP
           </p>
+          <div className="flex justify-center gap-4">
+            <button
+              onClick={handleBuy}
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg"
+            >
+              Buy Now
+            </button>
+            <a
+              href="https://farcaster.xyz/miniapps/tmjNyAmp7nkC/streme"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg"
+            >
+              Stake Now
+            </a>
+          </div>
         </div>
 
         <h1 className="text-2xl font-extrabold bg-gradient-to-r from-[#52a842] to-[#4ccc84] text-transparent bg-clip-text dark:from-[#bbf7d0] dark:to-[#86efac]">
