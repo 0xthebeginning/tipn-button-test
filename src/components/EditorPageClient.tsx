@@ -47,8 +47,16 @@ export default function EditorPageClient() {
               Buy Now
             </button>
             <button
-              onClick={() => sdk.actions?.openUrl?.('https://farcaster.xyz/miniapps/8CEpD-h8a_uW/stake')}
-              className="text-purple-900 dark:text-purple-200 underline font-medium"
+              onClick={async () => {
+                try {
+                  await sdk.actions.openMiniApp({
+                    url: 'https://farcaster.xyz/miniapps/tmjNyAmp7nkC/streme',
+                  });
+                } catch (err) {
+                  console.error("Open MiniApp failed:", err);
+                }
+              }}
+              className="text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-1 rounded-lg text-sm"
             >
               Stake Now
             </button>
