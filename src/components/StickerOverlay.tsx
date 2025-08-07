@@ -57,13 +57,13 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
         return;
       }
 
-      const { url: blobUrl } = await uploadRes.json();
+      const { url: imageUrl } = await uploadRes.json();
 
       const castText = 'Made this $SuperInu Moment 🐶✨ on @terricola.eth\'s miniapp! Try it! https://superinu-miniapp.vercel.app';
 
       const castUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(imageUrl)}`;
 
-      window.open(castUrl, '_blank'); // Opens in same tab or new tab depending on context
+      window.open(castUrl, '_blank');
     },
   }));
 
