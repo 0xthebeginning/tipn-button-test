@@ -4,17 +4,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMiniApp } from '@neynar/react';
 
-type FlatUser = {
-  fid?: number;
-  custody_address?: string | null;
-  verifications?: string[];
-};
-
-type NestedUserResp = {
+type WarpcastUserResp = {
   result?: {
     user?: {
       fid?: number;
-      custodyAddress?: string | null;
+      custodyAddress?: string;
       verifications?: string[];
     };
   };
@@ -37,7 +31,10 @@ export default function YourStats() {
   const [errMsg, setErrMsg] = useState<string | null>(null);
 
   const [holders, setHolders] = useState<string[]>([]);
+  const [stakers, setStakers] = useState<string[]>([]);
+
   const isHolder = useMemo(() => holders.length > 0, [holders]);
+  const isStaker = useMemo(() => stakers.length > 0, [stakers]);
 
   useEffect(() => {
     if (!fid) return;
@@ -47,33 +44,21 @@ export default function YourStats() {
       setLoading(true);
       setErrMsg(null);
       try {
-        // ---- 1) Fetch user wallets
+        // 1) Neynar proxy for custody + verifications (unchanged)
         const uRes = await fetch(`/api/neynar/users?fid=${fid}`, { cache: 'no-store' });
         if (!uRes.ok) throw new Error(`User fetch failed: ${uRes.status}`);
-        const raw = await uRes.json();
+        const data = (await uRes.json()) as WarpcastUserResp;
+        const u = data.result?.user;
 
-        // Accept either flat or nested shapes
-        const flat: FlatUser | undefined = ('fid' in raw) ? raw as FlatUser : undefined;
-        const nested: NestedUserResp | undefined = ('result' in raw) ? raw as NestedUserResp : undefined;
-
-        const custodyAddr =
-          flat?.custody_address ??
-          nested?.result?.user?.custodyAddress ??
-          null;
-
-        const verifiedAddrs =
-          (flat?.verifications ??
-           nested?.result?.user?.verifications ??
-           [])
-            .filter(Boolean)
-            .map(a => a.toLowerCase());
+        const custodyAddr = u?.custodyAddress ?? null;
+        const verifiedAddrs = (u?.verifications ?? []).map((a) => a.toLowerCase());
 
         if (!cancelled) {
           setCustody(custodyAddr);
           setVerified(verifiedAddrs);
         }
 
-        // ---- 2) Holder check
+        // 2) Check normal token holders (your existing /api/superinu/holdings)
         if (verifiedAddrs.length > 0) {
           const hRes = await fetch('/api/superinu/holdings', {
             method: 'POST',
@@ -82,14 +67,22 @@ export default function YourStats() {
           });
           if (!hRes.ok) throw new Error(`Holdings fetch failed: ${hRes.status}`);
           const h = (await hRes.json()) as HoldingsResp;
+          if (!cancelled) setHolders(h.holders ?? []);
 
-          if (!cancelled) {
-            // normalize to lowercase for comparisons
-            const hl = (h.holders ?? []).map(a => a.toLowerCase());
-            setHolders(hl);
-          }
+          // 3) Check staked-token holders (new /api/superinu/staked)
+          const sRes = await fetch('/api/superinu/staked', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ addresses: verifiedAddrs }),
+          });
+          if (!sRes.ok) throw new Error(`Staked fetch failed: ${sRes.status}`);
+          const s = (await sRes.json()) as HoldingsResp;
+          if (!cancelled) setStakers(s.holders ?? []);
         } else {
-          if (!cancelled) setHolders([]);
+          if (!cancelled) {
+            setHolders([]);
+            setStakers([]);
+          }
         }
       } catch (e) {
         if (!cancelled) setErrMsg(e instanceof Error ? e.message : 'Failed to load data');
@@ -98,7 +91,9 @@ export default function YourStats() {
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [fid]);
 
   return (
@@ -127,11 +122,15 @@ export default function YourStats() {
         {verified.length > 0 ? (
           <ul className="list-disc pl-5 space-y-1">
             {verified.map((addr) => {
-              const has = holders.includes(addr.toLowerCase());
+              const has = holders.includes(addr);
+              const staking = stakers.includes(addr);
               return (
                 <li key={addr} className="font-mono break-all">
-                  <span className={has ? 'text-green-600 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'}>
-                    {addr} {has ? '— ✅ holds $SuperInu' : '— ❌'}
+                  <span className="text-gray-700 dark:text-gray-300">
+                    {addr}
+                    {has && <span className="ml-2 text-green-600 dark:text-green-400">— holds $SuperInu</span>}
+                    {staking && <span className="ml-2 text-indigo-600 dark:text-indigo-400">— staking</span>}
+                    {!has && !staking && <span className="ml-2 text-gray-500">— none</span>}
                   </span>
                 </li>
               );
@@ -142,12 +141,19 @@ export default function YourStats() {
         )}
       </div>
 
-      <p className="text-sm">
-        Overall Holder:{' '}
+      <div className="text-sm">
+        Overall Holder:{" "}
         <span className={isHolder ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-gray-700 dark:text-gray-300'}>
           {isHolder ? 'Yes' : 'No'}
         </span>
-      </p>
+      </div>
+
+      <div className="text-sm">
+        Overall Staker:{" "}
+        <span className={isStaker ? 'text-indigo-600 dark:text-indigo-400 font-semibold' : 'text-gray-700 dark:text-gray-300'}>
+          {isStaker ? 'Yes' : 'No'}
+        </span>
+      </div>
     </div>
   );
 }
