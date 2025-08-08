@@ -6,9 +6,10 @@ import { useMiniApp } from '@neynar/react';
 type WarpcastUserResp = {
   result?: {
     user?: {
-      fid?: number;
-      custodyAddress?: string;
-      verifications?: string[];
+      extras?: {
+        ethWallets?: string[];
+        custodyAddress?: string | null;
+      };
     };
   };
   error?: { message?: string };
@@ -20,12 +21,13 @@ export default function YourStats() {
 
   const [fid, setFid] = useState<number | null>(null);
   const [custody, setCustody] = useState<string | null>(null);
-  const [verified, setVerified] = useState<string[]>([]);
+  const [wallets, setWallets] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [errMsg, setErrMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userFid) return;
+
     setFid(userFid);
     setLoading(true);
     setErrMsg(null);
@@ -34,13 +36,14 @@ export default function YourStats() {
       try {
         const res = await fetch(`/api/user?fid=${userFid}`);
         if (!res.ok) {
-          throw new Error(`Warpcast API ${res.status}`);
+          throw new Error(`API ${res.status}`);
         }
         const data: WarpcastUserResp = await res.json();
-        const u = data.result?.user;
-        setCustody(u?.custodyAddress ?? null);
-        setVerified(u?.verifications ?? []);
-      } catch (e: unknown) {
+        const extras = data.result?.user?.extras;
+
+        setCustody(extras?.custodyAddress ?? null);
+        setWallets(extras?.ethWallets ?? []);
+      } catch (e) {
         setErrMsg(e instanceof Error ? e.message : 'Failed to load wallets');
       } finally {
         setLoading(false);
@@ -61,11 +64,7 @@ export default function YourStats() {
       )}
 
       {loading && <p className="text-sm text-gray-500">Loading wallets…</p>}
-      {errMsg && (
-        <p className="text-sm text-red-500">
-          Couldn’t fetch wallets: {errMsg}
-        </p>
-      )}
+      {errMsg && <p className="text-sm text-red-500">Couldn’t fetch wallets: {errMsg}</p>}
 
       {custody && (
         <p className="text-sm text-gray-700 dark:text-gray-300 break-all">
@@ -74,10 +73,10 @@ export default function YourStats() {
       )}
 
       <div className="text-sm">
-        <div className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Verified Wallets</div>
-        {verified.length > 0 ? (
+        <div className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Verified EVM Wallets</div>
+        {wallets.length > 0 ? (
           <ul className="list-disc pl-5 space-y-1">
-            {verified.map((addr) => (
+            {wallets.map((addr) => (
               <li key={addr} className="font-mono break-all text-gray-700 dark:text-gray-300">
                 {addr}
               </li>
