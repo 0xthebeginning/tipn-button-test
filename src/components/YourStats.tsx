@@ -17,7 +17,7 @@ export default function YourStats() {
       try {
         const res = await fetch(`https://api.neynar.com/v2/farcaster/user?fid=${userFid}`, {
           headers: {
-            'api-key': process.env.NEXT_PUBLIC_NEYNAR_API_KEY || '',
+            'api_key': process.env.NEXT_PUBLIC_NEYNAR_API_KEY || '',
           },
         });
 
