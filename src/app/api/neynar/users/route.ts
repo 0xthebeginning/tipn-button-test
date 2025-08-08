@@ -1,27 +1,42 @@
-// src/app/api/neynar/users/route.ts
-import { NeynarAPIClient } from '@neynar/nodejs-sdk';
 import { NextResponse } from 'next/server';
+import { NeynarAPIClient } from '@neynar/nodejs-sdk';
 
-export async function GET(request: Request) {
-  const apiKey = process.env.NEYNAR_API_KEY;
-  const { searchParams } = new URL(request.url);
-  const fids = searchParams.get('fids');
+export const dynamic = 'force-dynamic';
 
-  if (!apiKey) {
-    return NextResponse.json({ error: 'Neynar API key missing' }, { status: 500 });
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const fidParam = searchParams.get('fid');
+
+  if (!fidParam) {
+    return NextResponse.json({ error: 'Missing fid' }, { status: 400 });
   }
-  if (!fids) {
-    return NextResponse.json({ error: 'FIDs parameter is required' }, { status: 400 });
+
+  const fid = Number(fidParam);
+  if (Number.isNaN(fid)) {
+    return NextResponse.json({ error: 'Invalid fid' }, { status: 400 });
+  }
+
+  const apiKey = process.env.NEYNAR_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json({ error: 'Missing NEYNAR_API_KEY' }, { status: 500 });
   }
 
   try {
-    const neynar = new NeynarAPIClient({ apiKey });
-    const fidsArray = fids.split(',').map((fid) => parseInt(fid.trim(), 10));
-    const { users } = await neynar.fetchBulkUsers({ fids: fidsArray });
+    const client = new NeynarAPIClient({ apiKey });
+    const { users } = await client.fetchBulkUsers({ fids: [fid] });
+    const u = users?.[0];
 
-    return NextResponse.json({ users });
-  } catch (error) {
-    console.error('Failed to fetch users:', error);
-    return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
+    if (!u) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      fid: u.fid,
+      custody_address: u.custody_address ?? null,
+      verifications: u.verifications ?? [],
+    });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ error: 'neynar_fetch_failed', detail: msg }, { status: 502 });
   }
 }
