@@ -1,19 +1,37 @@
+// src/components/YourStats.tsx
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
 import { useMiniApp } from '@neynar/react';
 
-type NeynarProxyUser = {
+type UserResp = {
   fid: number;
   custody_address: string | null;
   verifications: string[];
 };
 
-type HoldingItem = { address: string; ok: boolean; balance: string };
-type HoldingsResp = { holders: string[]; results: HoldingItem[]; error?: string };
+type AddrResult = {
+  address: string;
+  ok: boolean;
+  balance: string; // wei string
+  error?: string;
+};
 
-type StakedItem = { address: string; ok: boolean; balance: string };
-type StakedResp = { stakers: string[]; results: StakedItem[]; error?: string };
+type HoldingsResp = {
+  token: string;
+  chainid: number;
+  holders: string[];
+  results: AddrResult[];
+  error?: string;
+};
+
+type StakedResp = {
+  token: string;
+  chainid: number;
+  holders: string[];
+  results: AddrResult[];
+  error?: string;
+};
 
 export default function YourStats() {
   const { context } = useMiniApp();
@@ -21,23 +39,19 @@ export default function YourStats() {
 
   const [custody, setCustody] = useState<string | null>(null);
   const [verified, setVerified] = useState<string[]>([]);
+
+  const [holdings, setHoldings] = useState<AddrResult[]>([]);
+  const [staked, setStaked] = useState<AddrResult[]>([]);
+
   const [loadingUser, setLoadingUser] = useState(false);
-  const [userErr, setUserErr] = useState<string | null>(null);
-
-  const [holders, setHolders] = useState<string[]>([]);
-  const [holdings, setHoldings] = useState<HoldingItem[]>([]);
   const [loadingHold, setLoadingHold] = useState(false);
-  const [holdErr, setHoldErr] = useState<string | null>(null);
-
-  const [stakers, setStakers] = useState<string[]>([]);
-  const [staked, setStaked] = useState<StakedItem[]>([]);
   const [loadingStake, setLoadingStake] = useState(false);
+
+  const [userErr, setUserErr] = useState<string | null>(null);
+  const [holdErr, setHoldErr] = useState<string | null>(null);
   const [stakeErr, setStakeErr] = useState<string | null>(null);
 
-  const isHolder = useMemo(() => holders.length > 0, [holders]);
-  const isStaker = useMemo(() => stakers.length > 0, [stakers]);
-
-  // 1) Fetch user wallets from your Neynar proxy
+  // Fetch user -> custody + verified
   useEffect(() => {
     if (!fid) return;
     let cancelled = false;
@@ -47,15 +61,14 @@ export default function YourStats() {
       setUserErr(null);
       try {
         const res = await fetch(`/api/neynar/users?fid=${fid}`, { cache: 'no-store' });
-        if (!res.ok) throw new Error(`User fetch failed: ${res.status}`);
-        const data: NeynarProxyUser = await res.json();
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data: UserResp = await res.json();
 
-        if (cancelled) return;
-
-        setCustody(data.custody_address ?? null);
-        // Normalize + dedupe
-        const list = Array.from(new Set((data.verifications ?? []).map(a => a.toLowerCase())));
-        setVerified(list);
+        const v = (data.verifications ?? []).map((a) => a.toLowerCase());
+        if (!cancelled) {
+          setCustody(data.custody_address ?? null);
+          setVerified(v);
+        }
       } catch (e) {
         if (!cancelled) setUserErr(e instanceof Error ? e.message : 'Failed to load user');
       } finally {
@@ -63,12 +76,17 @@ export default function YourStats() {
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [fid]);
 
-  // 2) Holdings check (Etherscan route)
+  // Fetch holdings for verified wallets
   useEffect(() => {
-    if (verified.length === 0) return;
+    if (verified.length === 0) {
+      setHoldings([]);
+      return;
+    }
     let cancelled = false;
 
     (async () => {
@@ -80,25 +98,27 @@ export default function YourStats() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ addresses: verified }),
         });
-        if (!res.ok) throw new Error(`Holdings fetch failed: ${res.status}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data: HoldingsResp = await res.json();
-        if (cancelled) return;
-
-        setHolders(data.holders ?? []);
-        setHoldings(data.results ?? []);
+        if (!cancelled) setHoldings(data.results ?? []);
       } catch (e) {
-        if (!cancelled) setHoldErr(e instanceof Error ? e.message : 'Failed to load holdings');
+        if (!cancelled) setHoldErr(e instanceof Error ? e.message : 'Holdings fetch failed');
       } finally {
         if (!cancelled) setLoadingHold(false);
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [verified]);
 
-  // 3) Staked check (your staked route)
+  // Fetch staked balances for verified wallets
   useEffect(() => {
-    if (verified.length === 0) return;
+    if (verified.length === 0) {
+      setStaked([]);
+      return;
+    }
     let cancelled = false;
 
     (async () => {
@@ -110,53 +130,75 @@ export default function YourStats() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ addresses: verified }),
         });
-        if (!res.ok) throw new Error(`Staked fetch failed: ${res.status}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data: StakedResp = await res.json();
-        if (cancelled) return;
-
-        setStakers(data.stakers ?? []);
-        setStaked(data.results ?? []);
+        if (!cancelled) setStaked(data.results ?? []);
       } catch (e) {
-        if (!cancelled) setStakeErr(e instanceof Error ? e.message : 'Failed to load staked balances');
+        if (!cancelled) setStakeErr(e instanceof Error ? e.message : 'Staked fetch failed');
       } finally {
         if (!cancelled) setLoadingStake(false);
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [verified]);
+
+  // Derived flags (use the actual results arrays, not holders[])
+  const isHolder = useMemo(() => {
+    return holdings.some((r) => {
+      if (!r.ok) return false;
+      try {
+        return BigInt(r.balance) > 0n;
+      } catch {
+        return false;
+      }
+    });
+  }, [holdings]);
+
+  const isStaker = useMemo(() => {
+    return staked.some((r) => {
+      if (!r.ok) return false;
+      try {
+        return BigInt(r.balance) > 0n;
+      } catch {
+        return false;
+      }
+    });
+  }, [staked]);
 
   return (
     <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl p-6 w-full max-w-md shadow text-left space-y-4">
       <h2 className="text-xl font-bold text-gray-900 dark:text-white">Your Stats</h2>
 
       {/* FID */}
-      <div className="text-sm">
-        <div className="font-semibold text-gray-800 dark:text-gray-200">FID</div>
-        {fid ? (
-          <p className="font-mono text-gray-700 dark:text-gray-300">{fid}</p>
-        ) : (
-          <p className="text-gray-500">Open this in Farcaster to see your FID.</p>
-        )}
-      </div>
-
-      {/* User + wallets */}
-      {loadingUser && <p className="text-sm text-gray-500">Loading user…</p>}
+      {fid ? (
+        <p className="text-sm text-gray-700 dark:text-gray-300">
+          FID: <span className="font-mono">{fid}</span>
+        </p>
+      ) : (
+        <p className="text-sm text-gray-500">Open this in Farcaster to see your FID.</p>
+      )}
+      {loadingUser && <p className="text-sm text-gray-500">Loading profile…</p>}
       {userErr && <p className="text-sm text-red-500">Error: {userErr}</p>}
 
+      {/* Custody */}
       {custody && (
-        <div className="text-sm">
-          <div className="font-semibold text-gray-800 dark:text-gray-200">Custody Address</div>
-          <p className="font-mono break-all text-gray-700 dark:text-gray-300">{custody}</p>
-        </div>
+        <p className="text-sm text-gray-700 dark:text-gray-300 break-all">
+          Custody: <span className="font-mono">{custody}</span>
+        </p>
       )}
 
+      {/* Verified Wallets */}
       <div className="text-sm">
-        <div className="font-semibold text-gray-800 dark:text-gray-200">Verified Wallets</div>
+        <div className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Verified Wallets</div>
         {verified.length > 0 ? (
           <ul className="list-disc pl-5 space-y-1">
-            {verified.map(addr => (
-              <li key={addr} className="font-mono break-all text-gray-700 dark:text-gray-300">{addr}</li>
+            {verified.map((addr) => (
+              <li key={addr} className="font-mono break-all text-gray-700 dark:text-gray-300">
+                {addr}
+              </li>
             ))}
           </ul>
         ) : (
@@ -164,7 +206,7 @@ export default function YourStats() {
         )}
       </div>
 
-      {/* Holdings */}
+      {/* Holder */}
       <div className="text-sm">
         <div className="font-semibold text-gray-800 dark:text-gray-200">Holds $SuperInu?</div>
         {loadingHold && <p className="text-gray-500">Checking…</p>}
@@ -178,9 +220,9 @@ export default function YourStats() {
           <details className="mt-1">
             <summary className="cursor-pointer text-gray-600 dark:text-gray-300">Details</summary>
             <ul className="mt-2 space-y-1">
-              {holdings.map(h => (
+              {holdings.map((h) => (
                 <li key={h.address} className="font-mono text-xs break-all">
-                  {h.address} — {h.ok ? `balance: ${h.balance}` : 'no balance'}
+                  {h.address} — {h.ok ? `balance: ${h.balance}` : (h.error ?? 'error')}
                 </li>
               ))}
             </ul>
@@ -202,9 +244,9 @@ export default function YourStats() {
           <details className="mt-1">
             <summary className="cursor-pointer text-gray-600 dark:text-gray-300">Details</summary>
             <ul className="mt-2 space-y-1">
-              {staked.map(s => (
+              {staked.map((s) => (
                 <li key={s.address} className="font-mono text-xs break-all">
-                  {s.address} — {s.ok ? `staked: ${s.balance}` : 'no stake'}
+                  {s.address} — {s.ok ? `staked: ${s.balance}` : (s.error ?? 'no stake')}
                 </li>
               ))}
             </ul>
