@@ -42,7 +42,7 @@ export default function YourStats() {
       setErrMsg(null);
       try {
         // 1) Get custody + verified wallets via your /api/user proxy
-        const uRes = await fetch(`/api/user?fid=${fid}`, { cache: 'no-store' });
+        const uRes = await fetch(`/api/neynar/user?fid=${fid}`, { cache: 'no-store' });
         if (!uRes.ok) throw new Error(`User fetch failed: ${uRes.status}`);
         const data = (await uRes.json()) as WarpcastUserResp;
         const u = data.result?.user;
