@@ -32,7 +32,7 @@ export default function YourStats() {
 
     (async () => {
       try {
-        const res = await fetch(`https://api.warpcast.com/v2/user?fid=${userFid}`);
+        const res = await fetch(`/api/user?fid=${userFid}`);
         if (!res.ok) {
           throw new Error(`Warpcast API ${res.status}`);
         }
