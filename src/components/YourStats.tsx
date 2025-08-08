@@ -4,11 +4,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMiniApp } from '@neynar/react';
 
-type WarpcastUserResp = {
+type FlatUser = {
+  fid?: number;
+  custody_address?: string | null;
+  verifications?: string[];
+};
+
+type NestedUserResp = {
   result?: {
     user?: {
       fid?: number;
-      custodyAddress?: string;
+      custodyAddress?: string | null;
       verifications?: string[];
     };
   };
@@ -41,21 +47,33 @@ export default function YourStats() {
       setLoading(true);
       setErrMsg(null);
       try {
-        // 1) Get custody + verified wallets via your /api/user proxy
+        // ---- 1) Fetch user wallets
         const uRes = await fetch(`/api/neynar/users?fid=${fid}`, { cache: 'no-store' });
         if (!uRes.ok) throw new Error(`User fetch failed: ${uRes.status}`);
-        const data = (await uRes.json()) as WarpcastUserResp;
-        const u = data.result?.user;
+        const raw = await uRes.json();
 
-        const custodyAddr = u?.custodyAddress ?? null;
-        const verifiedAddrs = (u?.verifications ?? []).map((a) => a.toLowerCase());
+        // Accept either flat or nested shapes
+        const flat: FlatUser | undefined = ('fid' in raw) ? raw as FlatUser : undefined;
+        const nested: NestedUserResp | undefined = ('result' in raw) ? raw as NestedUserResp : undefined;
+
+        const custodyAddr =
+          flat?.custody_address ??
+          nested?.result?.user?.custodyAddress ??
+          null;
+
+        const verifiedAddrs =
+          (flat?.verifications ??
+           nested?.result?.user?.verifications ??
+           [])
+            .filter(Boolean)
+            .map(a => a.toLowerCase());
 
         if (!cancelled) {
           setCustody(custodyAddr);
           setVerified(verifiedAddrs);
         }
 
-        // 2) Holder check via /api/holdings (Etherscan v2)
+        // ---- 2) Holder check
         if (verifiedAddrs.length > 0) {
           const hRes = await fetch('/api/superinu/holdings', {
             method: 'POST',
@@ -66,7 +84,9 @@ export default function YourStats() {
           const h = (await hRes.json()) as HoldingsResp;
 
           if (!cancelled) {
-            setHolders(h.holders ?? []);
+            // normalize to lowercase for comparisons
+            const hl = (h.holders ?? []).map(a => a.toLowerCase());
+            setHolders(hl);
           }
         } else {
           if (!cancelled) setHolders([]);
@@ -78,9 +98,7 @@ export default function YourStats() {
       }
     })();
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [fid]);
 
   return (
@@ -109,7 +127,7 @@ export default function YourStats() {
         {verified.length > 0 ? (
           <ul className="list-disc pl-5 space-y-1">
             {verified.map((addr) => {
-              const has = holders.includes(addr);
+              const has = holders.includes(addr.toLowerCase());
               return (
                 <li key={addr} className="font-mono break-all">
                   <span className={has ? 'text-green-600 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'}>
@@ -125,7 +143,7 @@ export default function YourStats() {
       </div>
 
       <p className="text-sm">
-        Overall Holder:{" "}
+        Overall Holder:{' '}
         <span className={isHolder ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-gray-700 dark:text-gray-300'}>
           {isHolder ? 'Yes' : 'No'}
         </span>
