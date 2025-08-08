@@ -1,64 +1,117 @@
-// src/app/api/holdings/route.ts
+// src/app/api/superinu/holdings/route.ts
 import { NextRequest, NextResponse } from "next/server";
-
-const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY!;
-const SUPERINU_CONTRACT = process.env.SUPERINU_CONTRACT!; // e.g. 0x063eDA1b84ceaF79b8cC4a41658b449e8E1F9Eeb
-const CHAIN_ID = "8453"; // Base mainnet
-
-type HoldingsReq = { addresses: string[] };
-type EtherscanBalanceResp = { status?: string; result?: string; message?: string };
 
 export const runtime = "edge";
 
+interface HoldingsRequest {
+  addresses: string[];
+}
+
+interface EtherscanV2BalanceResp {
+  status?: string;
+  message?: string;
+  result?: string; // balance in wei as decimal string
+}
+
+interface AddressResult {
+  address: string;
+  ok: boolean;
+  balance: string; // wei string
+  error?: string;
+}
+
+const TOKEN = (process.env.SUPERINU_TOKEN_ADDRESS ?? "0x063eda1b84ceaf79b8cc4a41658b449e8e1f9eeb").toLowerCase();
+const API_KEY = process.env.ETHERSCAN_API_KEY;
+const HOST = "https://api.etherscan.io/v2/api"; // Etherscan v2 aggregator
+const BASE_CHAIN_ID = 8453;
+
 export async function POST(req: NextRequest) {
-  try {
-    if (!ETHERSCAN_API_KEY || !SUPERINU_CONTRACT) {
-      return NextResponse.json(
-        { error: "Missing ETHERSCAN_API_KEY or SUPERINU_CONTRACT env." },
-        { status: 500 }
-      );
-    }
-
-    const body = (await req.json()) as HoldingsReq;
-    const addresses = Array.isArray(body.addresses) ? body.addresses : [];
-
-    if (addresses.length === 0) {
-      return NextResponse.json({ holders: [], results: [] });
-    }
-
-    const urlBase = "https://api.etherscan.io/v2/api";
-
-    const checks = addresses.map(async (addr) => {
-      const url = new URL(urlBase);
-      url.searchParams.set("chainid", CHAIN_ID);
-      url.searchParams.set("module", "account");
-      url.searchParams.set("action", "tokenbalance");
-      url.searchParams.set("contractaddress", SUPERINU_CONTRACT);
-      url.searchParams.set("address", addr);
-      url.searchParams.set("tag", "latest");
-      url.searchParams.set("apikey", ETHERSCAN_API_KEY);
-
-      const r = await fetch(url.toString(), { cache: "no-store" });
-      if (!r.ok) {
-        return { address: addr, ok: false as const, balance: "0" };
-      }
-      const j = (await r.json()) as EtherscanBalanceResp;
-      const bal = j.result ?? "0";
-      // Treat non-numeric as zero
-      const safe = /^\d+$/.test(bal) ? bal : "0";
-      return { address: addr, ok: true as const, balance: safe };
-    });
-
-    const results = await Promise.all(checks);
-    const holders = results
-      .filter((x) => x.ok && BigInt(x.balance) > 0n)
-      .map((x) => x.address);
-
-    return NextResponse.json({ holders, results });
-  } catch (err) {
+  if (!API_KEY) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Unknown error" },
+      { error: "Missing ETHERSCAN_API_KEY env var" },
       { status: 500 }
     );
   }
+
+  let body: HoldingsRequest;
+  try {
+    body = (await req.json()) as HoldingsRequest;
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid JSON body" },
+      { status: 400 }
+    );
+  }
+
+  const input = Array.isArray(body.addresses) ? body.addresses : [];
+  const addresses = input
+    .map((a) => (typeof a === "string" ? a.trim().toLowerCase() : ""))
+    .filter((a) => /^0x[a-f0-9]{40}$/.test(a));
+
+  if (addresses.length === 0) {
+    return NextResponse.json(
+      { error: "Provide addresses: string[]" },
+      { status: 400 }
+    );
+  }
+
+  const results = await Promise.allSettled(
+    addresses.map(async (addr): Promise<AddressResult> => {
+      const url =
+        `${HOST}?chainid=${BASE_CHAIN_ID}` +
+        `&module=account&action=tokenbalance` +
+        `&contractaddress=${TOKEN}` +
+        `&address=${addr}` +
+        `&tag=latest` +
+        `&apikey=${API_KEY}`;
+
+      const resp = await fetch(url, { cache: "no-store" });
+      if (!resp.ok) {
+        return {
+          address: addr,
+          ok: false,
+          balance: "0",
+          error: `HTTP ${resp.status}`,
+        };
+      }
+
+      const data = (await resp.json()) as EtherscanV2BalanceResp;
+
+      const hasStatusOk = data.status === "1";
+      const hasResult = typeof data.result === "string";
+
+      if (!hasStatusOk && !hasResult) {
+        return {
+          address: addr,
+          ok: false,
+          balance: "0",
+          error: data.message ?? "Unknown error",
+        };
+      }
+
+      const balance = data.result ?? "0";
+      const ok = balance !== "0";
+
+      return { address: addr, ok, balance };
+    })
+  );
+
+  const parsed: AddressResult[] = results.map((r, i) => {
+    if (r.status === "fulfilled") return r.value;
+    return {
+      address: addresses[i],
+      ok: false,
+      balance: "0",
+      error: r.reason instanceof Error ? r.reason.message : "Request failed",
+    };
+  });
+
+  const holders = parsed.filter((p) => p.ok).map((p) => p.address);
+
+  return NextResponse.json({
+    token: TOKEN,
+    chainid: BASE_CHAIN_ID,
+    holders,
+    results: parsed,
+  });
 }
