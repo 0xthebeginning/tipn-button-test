@@ -128,12 +128,6 @@ export default function EditorPageClient() {
               </button>
             </div>
           </div>
-
-          <div className="text-left text-sm text-gray-700 dark:text-gray-300 space-y-1">
-            <p><span className="font-semibold">Token:</span> 0x063eDA1b84ceaF79b8cC4a41658b449e8E1F9Eeb (Base)</p>
-            <p><span className="font-semibold">Staked Token:</span> 0xC7F2329977339F4Ae003373D1ACb9717F9d0c6D5</p>
-            <p><span className="font-semibold">Miniapp:</span> farcaster.xyz/miniapps/8CEpD-h8a_uW/superinu</p>
-          </div>
         </div>
       )}
     </main>
