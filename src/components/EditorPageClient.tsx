@@ -31,7 +31,7 @@ export default function EditorPageClient() {
   async function handleStake() {
     try {
       await sdk.actions.openMiniApp({
-        url: 'https://farcaster.xyz/miniapps/tmjNyAmp7nkC/streme',
+        url: 'https://streme.fun/token/0x063eda1b84ceaf79b8cc4a41658b449e8e1f9eeb',
       });
     } catch (err) {
       console.error('Open MiniApp failed:', err);
