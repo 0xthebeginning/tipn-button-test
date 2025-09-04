@@ -80,7 +80,7 @@ const StickerOverlay = forwardRef<StickerOverlayHandle, {
       const { url: imageUrl } = await uploadRes.json();
 
       const castText = `Made this $SuperInu Moment 🐶✨ on @terricola.eth's miniapp! Try it!`;
-      const miniappUrl = 'https://farcaster.xyz/miniapps/8CEpD-h8a_uW/superinu';
+      const miniappUrl = 'https://superinu-miniapp.vercel.app';
       const finalCast = `${castText}\n\n${miniappUrl}\n`.trim();
 
       try {
