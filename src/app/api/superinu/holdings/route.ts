@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createPublicClient, http } from "viem";
+import { base } from "viem/chains";
 
-// Use Node runtime for better compatibility
 export const runtime = "nodejs";
 
 type ReqBody = { addresses: string[] };
@@ -9,31 +10,30 @@ const TOKEN =
   (process.env.SUPERINU_TOKEN_ADDRESS ??
     "0x063eDA1b84ceaF79b8cC4a41658b449e8e1f9eeb").toLowerCase();
 
-const ALCHEMY_RPC = process.env.ALCHEMY_BASE_RPC_URL;
+const ALCHEMY_BASE_RPC_URL = process.env.ALCHEMY_BASE_RPC_URL;
 
-// 4-byte selector of balanceOf(address): keccak256("balanceOf(address)") -> 0x70a08231
-const SELECTOR = "70a08231";
-
-function pad32(hexNo0x: string) {
-  return hexNo0x.padStart(64, "0");
-}
-
-function encodeBalanceOfData(address: string) {
-  const addr = address.toLowerCase().replace(/^0x/, "");
-  return "0x" + SELECTOR + pad32(addr);
-}
+const erc20Abi = [
+  {
+    type: "function",
+    name: "balanceOf",
+    stateMutability: "view",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+] as const;
 
 export async function POST(req: NextRequest) {
   try {
-    if (!ALCHEMY_RPC) {
+    if (!ALCHEMY_BASE_RPC_URL) {
       return NextResponse.json(
-        { error: "Missing ALCHEMY_BASE_RPC_URL env var" },
+        { error: "Missing ALCHEMY_BASE_RPC_URL" },
         { status: 500 }
       );
     }
 
     const body = (await req.json()) as ReqBody;
     const input = Array.isArray(body.addresses) ? body.addresses : [];
+
     const addresses = input
       .map((a) => (typeof a === "string" ? a.trim().toLowerCase() : ""))
       .filter((a) => /^0x[a-f0-9]{40}$/.test(a));
@@ -42,69 +42,44 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ token: TOKEN, holders: [], results: [] });
     }
 
-    // Build JSON-RPC batch
-    const batch = addresses.map((addr, i) => ({
-      jsonrpc: "2.0",
-      id: i + 1,
-      method: "eth_call",
-      params: [
-        {
-          to: TOKEN,
-          data: encodeBalanceOfData(addr),
-        },
-        "latest",
-      ],
-    }));
-
-    const resp = await fetch(ALCHEMY_RPC, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(batch),
-      // Don’t let the platform cache RPC responses
-      cache: "no-store",
+    const client = createPublicClient({
+      chain: base,
+      transport: http(ALCHEMY_BASE_RPC_URL),
     });
 
-    if (!resp.ok) {
-      return NextResponse.json(
-        { error: `Alchemy RPC HTTP ${resp.status}` },
-        { status: 502 }
-      );
-    }
+    const contracts = addresses.map((addr) => ({
+      address: TOKEN as `0x${string}`,
+      abi: erc20Abi,
+      functionName: "balanceOf" as const,
+      args: [addr as `0x${string}`],
+    }));
 
-    type RpcItem = { id: number; result?: string; error?: { code: number; message: string } };
-    const json = (await resp.json()) as RpcItem[];
+    const resp = await client.multicall({
+      allowFailure: true,
+      contracts,
+    });
 
-    const results = addresses.map((addr, idx) => {
-      const item = json.find((j) => j.id === idx + 1);
-      if (!item) return { address: addr, ok: false, balance: "0", error: "missing response" };
-
-      if (item.error) {
+    const results = resp.map((entry, i) => {
+      const address = addresses[i];
+      if (entry.status === "failure") {
         return {
-          address: addr,
+          address,
           ok: false,
           balance: "0",
-          error: item.error.message ?? `rpc error ${item.error.code}`,
+          error: entry.error?.message ?? "multicall failure",
         };
       }
-
-      const hex = (item.result ?? "0x0").toString();
-      // hex -> bigint -> string
-      let balance = "0";
-      try {
-        balance = BigInt(hex).toString();
-      } catch {
-        balance = "0";
-      }
-      return { address: addr, ok: balance !== "0", balance };
+      const bal = (entry.result as bigint) ?? 0n;
+      return {
+        address,
+        ok: bal > 0n,
+        balance: bal.toString(),
+      };
     });
 
     const holders = results.filter((r) => r.ok).map((r) => r.address);
 
-    return NextResponse.json({
-      token: TOKEN,
-      holders,
-      results,
-    });
+    return NextResponse.json({ token: TOKEN, holders, results });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Holdings check failed";
     return NextResponse.json({ error: msg }, { status: 502 });

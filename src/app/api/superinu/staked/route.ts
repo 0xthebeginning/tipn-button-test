@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createPublicClient, http } from "viem";
+import { base } from "viem/chains";
 
 export const runtime = "nodejs";
 
@@ -8,30 +10,30 @@ const STAKED_TOKEN =
   (process.env.SUPERINU_STAKED_TOKEN_ADDRESS ??
     "0xC7F2329977339F4Ae003373D1ACb9717F9d0c6D5").toLowerCase();
 
-const ALCHEMY_RPC = process.env.ALCHEMY_BASE_RPC_URL;
+const ALCHEMY_BASE_RPC_URL = process.env.ALCHEMY_BASE_RPC_URL;
 
-const SELECTOR = "70a08231"; // balanceOf(address)
-
-function pad32(hexNo0x: string) {
-  return hexNo0x.padStart(64, "0");
-}
-
-function encodeBalanceOfData(address: string) {
-  const addr = address.toLowerCase().replace(/^0x/, "");
-  return "0x" + SELECTOR + pad32(addr);
-}
+const erc20Abi = [
+  {
+    type: "function",
+    name: "balanceOf",
+    stateMutability: "view",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+] as const;
 
 export async function POST(req: NextRequest) {
   try {
-    if (!ALCHEMY_RPC) {
+    if (!ALCHEMY_BASE_RPC_URL) {
       return NextResponse.json(
-        { error: "Missing ALCHEMY_BASE_RPC_URL env var" },
+        { error: "Missing ALCHEMY_BASE_RPC_URL" },
         { status: 500 }
       );
     }
 
     const body = (await req.json()) as ReqBody;
     const input = Array.isArray(body.addresses) ? body.addresses : [];
+
     const addresses = input
       .map((a) => (typeof a === "string" ? a.trim().toLowerCase() : ""))
       .filter((a) => /^0x[a-f0-9]{40}$/.test(a));
@@ -40,66 +42,44 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ token: STAKED_TOKEN, stakers: [], results: [] });
     }
 
-    const batch = addresses.map((addr, i) => ({
-      jsonrpc: "2.0",
-      id: i + 1,
-      method: "eth_call",
-      params: [
-        {
-          to: STAKED_TOKEN,
-          data: encodeBalanceOfData(addr),
-        },
-        "latest",
-      ],
-    }));
-
-    const resp = await fetch(ALCHEMY_RPC, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(batch),
-      cache: "no-store",
+    const client = createPublicClient({
+      chain: base,
+      transport: http(ALCHEMY_BASE_RPC_URL),
     });
 
-    if (!resp.ok) {
-      return NextResponse.json(
-        { error: `Alchemy RPC HTTP ${resp.status}` },
-        { status: 502 }
-      );
-    }
+    const contracts = addresses.map((addr) => ({
+      address: STAKED_TOKEN as `0x${string}`,
+      abi: erc20Abi,
+      functionName: "balanceOf" as const,
+      args: [addr as `0x${string}`],
+    }));
 
-    type RpcItem = { id: number; result?: string; error?: { code: number; message: string } };
-    const json = (await resp.json()) as RpcItem[];
+    const resp = await client.multicall({
+      allowFailure: true,
+      contracts,
+    });
 
-    const results = addresses.map((addr, idx) => {
-      const item = json.find((j) => j.id === idx + 1);
-      if (!item) return { address: addr, ok: false, balance: "0", error: "missing response" };
-
-      if (item.error) {
+    const results = resp.map((entry, i) => {
+      const address = addresses[i];
+      if (entry.status === "failure") {
         return {
-          address: addr,
+          address,
           ok: false,
           balance: "0",
-          error: item.error.message ?? `rpc error ${item.error.code}`,
+          error: entry.error?.message ?? "multicall failure",
         };
       }
-
-      const hex = (item.result ?? "0x0").toString();
-      let balance = "0";
-      try {
-        balance = BigInt(hex).toString();
-      } catch {
-        balance = "0";
-      }
-      return { address: addr, ok: balance !== "0", balance };
+      const bal = (entry.result as bigint) ?? 0n;
+      return {
+        address,
+        ok: bal > 0n,
+        balance: bal.toString(),
+      };
     });
 
     const stakers = results.filter((r) => r.ok).map((r) => r.address);
 
-    return NextResponse.json({
-      token: STAKED_TOKEN,
-      stakers,
-      results,
-    });
+    return NextResponse.json({ token: STAKED_TOKEN, stakers, results });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Staked check failed";
     return NextResponse.json({ error: msg }, { status: 502 });
