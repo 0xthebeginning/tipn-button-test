@@ -85,7 +85,6 @@ export default function EditorPageClient() {
         const custody = (u.custody_address ?? '').toLowerCase();
         const ver = (u.verifications ?? []).map((a) => a.toLowerCase());
         const all = Array.from(new Set([...(custody ? [custody] : []), ...ver]));
-        if (!cancelled) setAllWallets(all);
 
         // If no wallets, stop early
         if (all.length === 0) {
