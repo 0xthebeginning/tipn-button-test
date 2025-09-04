@@ -3,34 +3,48 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useMiniApp } from '@neynar/react';
+import { formatUnits } from 'viem';
 
-type NeynarUserResp = {
-  fid?: number;
+type WarpcastUserResp = {
+  fid: number;
   custody_address?: string | null;
-  verifications?: string[]; // lowercase hex strings expected from your route
-  error?: string;
-};
-
-type BalanceItem = {
-  address: string;
-  ok: boolean;
-  balance: string; // wei (as decimal string)
+  verifications?: string[];
   error?: string;
 };
 
 type HoldingsResp = {
   token: string;
   holders: string[];
-  results: BalanceItem[];
+  results: { address: string; ok: boolean; balance: string; error?: string }[];
   error?: string;
 };
 
-type StakedResp = {
+type StakeResp = {
   token: string;
-  stakers: string[];
-  results: BalanceItem[];
+  holders: string[];
+  results: { address: string; ok: boolean; balance: string; error?: string }[];
   error?: string;
 };
+
+const DECIMALS = 18; // SUPERINU decimals
+const SYMBOL = 'SUPERINU';
+
+function shortAddr(a: string) {
+  return `${a.slice(0, 6)}…${a.slice(-4)}`;
+}
+
+function fmt(amountWei: string) {
+  try {
+    const human = formatUnits(BigInt(amountWei), DECIMALS);
+    // Add grouping, trim trailing zeros nicely
+    const [intPart, fracPart = ''] = human.split('.');
+    const grouped = new Intl.NumberFormat().format(Number(intPart));
+    const trimmedFrac = fracPart.replace(/0+$/, '');
+    return trimmedFrac ? `${grouped}.${trimmedFrac}` : grouped;
+  } catch {
+    return '0';
+  }
+}
 
 export default function YourStats() {
   const { context } = useMiniApp();
@@ -38,49 +52,34 @@ export default function YourStats() {
 
   const [custody, setCustody] = useState<string | null>(null);
   const [verified, setVerified] = useState<string[]>([]);
-
-  const [holdings, setHoldings] = useState<BalanceItem[]>([]);
-  const [staked, setStaked] = useState<BalanceItem[]>([]);
-
   const [loadingUser, setLoadingUser] = useState(false);
-  const [loadingHold, setLoadingHold] = useState(false);
-  const [loadingStake, setLoadingStake] = useState(false);
-
   const [userErr, setUserErr] = useState<string | null>(null);
+
+  const [holds, setHolds] = useState<HoldingsResp | null>(null);
+  const [loadingHold, setLoadingHold] = useState(false);
   const [holdErr, setHoldErr] = useState<string | null>(null);
+
+  const [staked, setStaked] = useState<StakeResp | null>(null);
+  const [loadingStake, setLoadingStake] = useState(false);
   const [stakeErr, setStakeErr] = useState<string | null>(null);
 
-  // Overall booleans
-  const isHolder = useMemo(
-    () => holdings.some((h) => h.ok),
-    [holdings]
-  );
-  const isStaker = useMemo(
-    () => staked.some((s) => s.ok),
-    [staked]
-  );
-
-  // 1) Load wallet info from your Neynar proxy
+  // Fetch Neynar user (custody + verifications) via your existing proxy route.
   useEffect(() => {
     if (!fid) return;
-
     let cancelled = false;
-    setLoadingUser(true);
-    setUserErr(null);
 
     (async () => {
+      setLoadingUser(true);
+      setUserErr(null);
       try {
         const res = await fetch(`/api/neynar/users?fid=${fid}`, { cache: 'no-store' });
         if (!res.ok) throw new Error(`User fetch failed: ${res.status}`);
-        const data = (await res.json()) as NeynarUserResp;
-
+        const data = (await res.json()) as WarpcastUserResp;
         if (cancelled) return;
 
-        if (data.error) throw new Error(data.error);
-
-        const verifs = (data.verifications ?? []).map((a) => a.toLowerCase());
-        setCustody(data.custody_address ?? null);
-        setVerified(verifs);
+        const v = (data.verifications ?? []).map((a) => a.toLowerCase());
+        setVerified(v);
+        setCustody((data.custody_address ?? null) as string | null);
       } catch (e) {
         if (!cancelled) setUserErr(e instanceof Error ? e.message : 'Failed to load user');
       } finally {
@@ -93,30 +92,28 @@ export default function YourStats() {
     };
   }, [fid]);
 
-  // 2) Check SuperInu ERC-20 holdings via Alchemy-powered route
+  // Holdings
   useEffect(() => {
     if (verified.length === 0) {
-      setHoldings([]);
+      setHolds(null);
+      setHoldErr(null);
       return;
     }
-
     let cancelled = false;
-    setLoadingHold(true);
-    setHoldErr(null);
 
     (async () => {
+      setLoadingHold(true);
+      setHoldErr(null);
       try {
         const res = await fetch('/api/superinu/holdings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ addresses: verified }),
+          cache: 'no-store',
         });
         if (!res.ok) throw new Error(`Holdings fetch failed: ${res.status}`);
         const data = (await res.json()) as HoldingsResp;
-        if (cancelled) return;
-
-        if (data.error) throw new Error(data.error);
-        setHoldings(data.results ?? []);
+        if (!cancelled) setHolds(data);
       } catch (e) {
         if (!cancelled) setHoldErr(e instanceof Error ? e.message : 'Failed to load holdings');
       } finally {
@@ -129,32 +126,30 @@ export default function YourStats() {
     };
   }, [verified]);
 
-  // 3) Check staked token balances via Alchemy-powered route
+  // Staked
   useEffect(() => {
     if (verified.length === 0) {
-      setStaked([]);
+      setStaked(null);
+      setStakeErr(null);
       return;
     }
-
     let cancelled = false;
-    setLoadingStake(true);
-    setStakeErr(null);
 
     (async () => {
+      setLoadingStake(true);
+      setStakeErr(null);
       try {
         const res = await fetch('/api/superinu/staked', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ addresses: verified }),
+          cache: 'no-store',
         });
         if (!res.ok) throw new Error(`Staked fetch failed: ${res.status}`);
-        const data = (await res.json()) as StakedResp;
-        if (cancelled) return;
-
-        if (data.error) throw new Error(data.error);
-        setStaked(data.results ?? []);
+        const data = (await res.json()) as StakeResp;
+        if (!cancelled) setStaked(data);
       } catch (e) {
-        if (!cancelled) setStakeErr(e instanceof Error ? e.message : 'Failed to load staked balances');
+        if (!cancelled) setStakeErr(e instanceof Error ? e.message : 'Failed to load staked');
       } finally {
         if (!cancelled) setLoadingStake(false);
       }
@@ -164,6 +159,9 @@ export default function YourStats() {
       cancelled = true;
     };
   }, [verified]);
+
+  const isHolder = useMemo(() => (holds?.holders?.length ?? 0) > 0, [holds]);
+  const isStaker = useMemo(() => (staked?.holders?.length ?? 0) > 0, [staked]);
 
   return (
     <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl p-6 w-full max-w-md shadow text-left space-y-4">
@@ -175,21 +173,19 @@ export default function YourStats() {
           FID: <span className="font-mono">{fid}</span>
         </p>
       ) : (
-        <p className="text-sm text-gray-500">Open in Farcaster to see your FID.</p>
+        <p className="text-sm text-gray-500">Open this in Farcaster to see your FID.</p>
       )}
 
-      {/* User load/error */}
-      {loadingUser && <p className="text-sm text-gray-500">Loading account…</p>}
+      {/* Custody + Wallets */}
+      {loadingUser && <p className="text-sm text-gray-500">Loading your wallets…</p>}
       {userErr && <p className="text-sm text-red-500">Error: {userErr}</p>}
 
-      {/* Custody */}
       {custody && (
         <p className="text-sm text-gray-700 dark:text-gray-300 break-all">
           Custody: <span className="font-mono">{custody}</span>
         </p>
       )}
 
-      {/* Verified wallets */}
       <div className="text-sm">
         <div className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Verified Wallets</div>
         {verified.length > 0 ? (
@@ -201,13 +197,13 @@ export default function YourStats() {
             ))}
           </ul>
         ) : (
-          <p className="text-gray-500">No verified wallets found.</p>
+          !loadingUser && <p className="text-gray-500">No verified wallets found.</p>
         )}
       </div>
 
       {/* Holdings */}
       <div className="text-sm">
-        <div className="font-semibold text-gray-800 dark:text-gray-200">Holds $SuperInu?</div>
+        <div className="font-semibold text-gray-800 dark:text-gray-200">Holds ${SYMBOL}?</div>
         {loadingHold && <p className="text-gray-500">Checking…</p>}
         {holdErr && <p className="text-red-500">Error: {holdErr}</p>}
         {!loadingHold && !holdErr && (
@@ -216,15 +212,22 @@ export default function YourStats() {
           </p>
         )}
 
-        {holdings.length > 0 && (
+        {holds?.results && holds.results.length > 0 && (
           <details className="mt-1">
             <summary className="cursor-pointer text-gray-600 dark:text-gray-300">Details</summary>
             <ul className="mt-2 space-y-1">
-              {holdings.map((h) => (
-                <li key={h.address} className="font-mono text-xs break-all">
-                  {h.address} — {h.ok ? `balance: ${h.balance}` : h.error ? `error: ${h.error}` : 'no tokens'}
-                </li>
-              ))}
+              {holds.results.map((r) => {
+                const has = r.ok && r.balance !== '0';
+                const line =
+                  r.error
+                    ? `error: ${r.error}`
+                    : `balance: ${fmt(r.balance)} ${SYMBOL}`;
+                return (
+                  <li key={`hold-${r.address}`} className="font-mono text-xs break-all">
+                    {shortAddr(r.address)} — {has ? '✅ ' : '❌ '} {line}
+                  </li>
+                );
+              })}
             </ul>
           </details>
         )}
@@ -232,7 +235,7 @@ export default function YourStats() {
 
       {/* Staked */}
       <div className="text-sm">
-        <div className="font-semibold text-gray-800 dark:text-gray-200">Staking $SuperInu?</div>
+        <div className="font-semibold text-gray-800 dark:text-gray-200">Staking ${SYMBOL}?</div>
         {loadingStake && <p className="text-gray-500">Checking…</p>}
         {stakeErr && <p className="text-red-500">Error: {stakeErr}</p>}
         {!loadingStake && !stakeErr && (
@@ -241,15 +244,23 @@ export default function YourStats() {
           </p>
         )}
 
-        {staked.length > 0 && (
+        {staked?.results && staked.results.length > 0 && (
           <details className="mt-1">
             <summary className="cursor-pointer text-gray-600 dark:text-gray-300">Details</summary>
             <ul className="mt-2 space-y-1">
-              {staked.map((s) => (
-                <li key={s.address} className="font-mono text-xs break-all">
-                  {s.address} — {s.ok ? `balance: ${s.balance}` : s.error ? `error: ${s.error}` : 'no stake'}
-                </li>
-              ))}
+              {staked.results.map((r) => {
+                const has = r.ok && r.balance !== '0';
+                const line =
+                  r.error
+                    ? `error`
+                    : `balance: ${fmt(r.balance)} ${SYMBOL}`;
+                return (
+                  <li key={`stk-${r.address}`} className="font-mono text-xs break-all">
+                    {shortAddr(r.address)} — {has ? '✅ ' : '❌ '} {line}
+                    {r.error ? `: ${r.error}` : ''}
+                  </li>
+                );
+              })}
             </ul>
           </details>
         )}
