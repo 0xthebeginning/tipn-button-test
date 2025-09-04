@@ -8,9 +8,14 @@ type ReqBody = { addresses: string[] };
 
 const TOKEN =
   (process.env.SUPERINU_TOKEN_ADDRESS ??
-    "0x063eDA1b84ceaF79b8cC4a41658b449e8e1f9eeb").toLowerCase();
+    "0x063eDA1b84ceaF79b8cC4a41658b449e8E1F9Eeb").toLowerCase();
 
 const ALCHEMY_BASE_RPC_URL = process.env.ALCHEMY_BASE_RPC_URL;
+if (!ALCHEMY_BASE_RPC_URL) {
+  throw new Error(
+    "ALCHEMY_BASE_RPC_URL env var is not set. Expected e.g. https://base-mainnet.g.alchemy.com/v2/<KEY>"
+  );
+}
 
 const erc20Abi = [
   {
@@ -22,41 +27,32 @@ const erc20Abi = [
   },
 ] as const;
 
+const client = createPublicClient({
+  chain: base,
+  transport: http(ALCHEMY_BASE_RPC_URL),
+});
+
 export async function POST(req: NextRequest) {
   try {
-    if (!ALCHEMY_BASE_RPC_URL) {
-      return NextResponse.json(
-        { error: "Missing ALCHEMY_BASE_RPC_URL" },
-        { status: 500 }
-      );
-    }
-
     const body = (await req.json()) as ReqBody;
     const input = Array.isArray(body.addresses) ? body.addresses : [];
 
     const addresses = input
       .map((a) => (typeof a === "string" ? a.trim().toLowerCase() : ""))
-      .filter((a) => /^0x[a-f0-9]{40}$/.test(a));
+      .filter((a) => /^0x[a-f0-9]{40}$/.test(a)) as `0x${string}`[];
 
     if (addresses.length === 0) {
       return NextResponse.json({ token: TOKEN, holders: [], results: [] });
     }
 
-    const client = createPublicClient({
-      chain: base,
-      transport: http(ALCHEMY_BASE_RPC_URL),
-    });
-
-    const contracts = addresses.map((addr) => ({
-      address: TOKEN as `0x${string}`,
-      abi: erc20Abi,
-      functionName: "balanceOf" as const,
-      args: [addr as `0x${string}`],
-    }));
-
     const resp = await client.multicall({
       allowFailure: true,
-      contracts,
+      contracts: addresses.map((addr) => ({
+        address: TOKEN as `0x${string}`,
+        abi: erc20Abi,
+        functionName: "balanceOf",
+        args: [addr],
+      })),
     });
 
     const results = resp.map((entry, i) => {
@@ -68,20 +64,16 @@ export async function POST(req: NextRequest) {
           balance: "0",
           error: entry.error?.message ?? "multicall failure",
         };
-      }
+        }
       const bal = (entry.result as bigint) ?? 0n;
-      return {
-        address,
-        ok: bal > 0n,
-        balance: bal.toString(),
-      };
+      return { address, ok: bal > 0n, balance: bal.toString() };
     });
 
     const holders = results.filter((r) => r.ok).map((r) => r.address);
-
     return NextResponse.json({ token: TOKEN, holders, results });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Holdings check failed";
+    const msg =
+      e instanceof Error ? e.message : "Holdings check failed (Alchemy)";
     return NextResponse.json({ error: msg }, { status: 502 });
   }
 }
