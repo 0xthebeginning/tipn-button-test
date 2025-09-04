@@ -1,60 +1,26 @@
-// src/components/EditorPageClient.tsx
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import StickerOverlay, { StickerOverlayHandle } from './StickerOverlay';
 import sdk from '@farcaster/miniapp-sdk';
-import YourStats from './YourStats';
-import { useMiniApp } from '@neynar/react';
+import YourStats, { useSuperInuStatus } from './YourStats';
 
 type TabKey = 'editor' | 'stats' | 'about';
-type StickerChoice = 'regular' | 'staker';
-
-type WarpcastUserResp = {
-  result?: {
-    user?: {
-      fid?: number;
-      custodyAddress?: string;
-      verifications?: string[];
-    };
-  };
-  error?: { message?: string };
-};
-
-type HoldingsResp = {
-  holders: string[];
-  results: { address: string; ok: boolean; balance: string }[];
-  error?: string;
-};
 
 export default function EditorPageClient() {
-  const { context } = useMiniApp();
-  const fid = context?.user?.fid ?? null;
-
   const [photoURL, setPhotoURL] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>('editor');
+  const [stickerMode, setStickerMode] = useState<'regular' | 'staker'>('regular');
   const stickerRef = useRef<StickerOverlayHandle>(null);
 
-  // eligibility
-  const [loadingElig, setLoadingElig] = useState(false);
-  const [eligErr, setEligErr] = useState<string | null>(null);
-  const [verified, setVerified] = useState<string[]>([]);
-  const [isHolder, setIsHolder] = useState(false);
-  const [isStaker, setIsStaker] = useState(false);
-
-  // sticker choice
-  const [stickerChoice, setStickerChoice] = useState<StickerChoice>('regular');
-
-  const statusFraction = useMemo(() => {
-    let score = 0;
-    if (isHolder) score += 1;
-    if (isStaker) score += 1;
-    return `${score}/2`;
-  }, [isHolder, isStaker]);
+  // 🔁 Single source of truth for status used in BOTH places
+  const status = useSuperInuStatus();
+  const score = (status.isHolder ? 1 : 0) + (status.isStaker ? 1 : 0);
+  const statusLabel = status.isHolder ? (status.isStaker ? 'Holder + Staker' : 'Holder') : 'Not Holder';
 
   function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) setPhotoURL(URL.createObjectURL(file));
+    const f = e.target.files?.[0];
+    if (f) setPhotoURL(URL.createObjectURL(f));
   }
 
   async function handleBuy() {
@@ -77,84 +43,19 @@ export default function EditorPageClient() {
     }
   }
 
-  // Fetch wallets -> check holdings & staked (server routes already exist)
-  useEffect(() => {
-    if (!fid) return;
+  // choose sticker art by mode
+  const stickerUrl =
+    stickerMode === 'staker'
+      ? '/superinuStaker.png' // place this file in /public
+      : '/superinuMain2.png';
 
-    let cancelled = false;
-
-    (async () => {
-      try {
-        setLoadingElig(true);
-        setEligErr(null);
-
-        // 1) wallets
-        const uRes = await fetch(`/api/neynar/users?fid=${fid}`, { cache: 'no-store' });
-        if (!uRes.ok) throw new Error(`wallets ${uRes.status}`);
-        const user = (await uRes.json()) as WarpcastUserResp;
-        const v = (user.result?.user?.verifications ?? []).map((a) => a.toLowerCase());
-        if (!cancelled) setVerified(v);
-
-        if (v.length === 0) {
-          if (!cancelled) {
-            setIsHolder(false);
-            setIsStaker(false);
-          }
-          return;
-        }
-
-        // 2) holdings
-        const hRes = await fetch('/api/superinu/holdings', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ addresses: v }),
-        });
-        if (!hRes.ok) throw new Error(`holdings ${hRes.status}`);
-        const holdings = (await hRes.json()) as HoldingsResp;
-        const holder = (holdings.holders ?? []).length > 0;
-
-        // 3) staked
-        const sRes = await fetch('/api/superinu/staked', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ addresses: v }),
-        });
-        if (!sRes.ok) throw new Error(`staked ${sRes.status}`);
-        const staked = (await sRes.json()) as HoldingsResp; // same shape: { holders, results }
-        const staker = (staked.holders ?? []).length > 0;
-
-        if (!cancelled) {
-          setIsHolder(holder);
-          setIsStaker(staker);
-
-          // auto-select staker sticker if eligible
-          setStickerChoice(staker ? 'staker' : 'regular');
-        }
-      } catch (e) {
-        if (!cancelled) {
-          setEligErr(e instanceof Error ? e.message : 'eligibility failed');
-          setIsHolder(false);
-          setIsStaker(false);
-        }
-      } finally {
-        if (!cancelled) setLoadingElig(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [fid]);
-
-  const chosenStickerUrl =
-    stickerChoice === 'staker' ? '/superinuStaker.png' : '/superinuMain2.png';
-
-  const canEdit = isHolder; // must hold to use stickers
+  const canUseStickers = status.isHolder; // gate editor by holding
+  const canUseStakerSticker = status.isStaker;
 
   return (
-    <main className="min-h-screen bg-[#f1fff0] dark:bg-gray-900 flex flex-col items-center justify-start pt-6 transition-colors">
-      {/* Tabs */}
-      <div className="flex gap-4 mb-4">
+    <main className="min-h-screen bg-[#0f1a14] dark:bg-gray-900 flex flex-col items-center justify-start pt-6 transition-colors text-white">
+      {/* Top tabs */}
+      <div className="flex gap-4 mb-2">
         {(['editor', 'stats', 'about'] as TabKey[]).map((key) => (
           <button
             key={key}
@@ -162,7 +63,7 @@ export default function EditorPageClient() {
             className={`px-4 py-2 rounded-lg font-semibold transition ${
               activeTab === key
                 ? 'bg-green-600 text-white'
-                : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-white hover:opacity-90'
+                : 'bg-white/10 text-white hover:bg-white/20'
             }`}
           >
             {key === 'editor' ? 'Editor' : key === 'stats' ? 'Your Stats' : 'About'}
@@ -170,154 +71,95 @@ export default function EditorPageClient() {
         ))}
       </div>
 
-      {/* Eligibility chip */}
-      <div className="mb-2 text-sm text-gray-700 dark:text-gray-300">
-        Status: <span className="font-semibold">{statusFraction}</span>{' '}
-        <span className="ml-2">
-          {loadingElig
-            ? 'Checking…'
-            : eligErr
-            ? `Error: ${eligErr}`
-            : isHolder
-            ? isStaker
-              ? '(Holder + Staker)'
-              : '(Holder)'
-            : '(Not Holder)'}
-        </span>
+      {/* Shared mini status banner */}
+      <div className="mb-4 text-sm text-white/90">
+        Status: <span className="font-semibold">{score}/2</span>&nbsp;
+        <span className="opacity-80">({statusLabel})</span>
       </div>
 
-      {/* Editor tab */}
-      {activeTab === 'editor' && (
-        <div className="m-4 p-6 bg-white dark:bg-gray-800 border-2 border-[#52a842] dark:border-[#4ccc84] rounded-2xl shadow-lg space-y-6 text-center w-full max-w-md transition-colors">
-          <h1 className="text-2xl font-extrabold bg-gradient-to-r from-[#52a842] to-[#4ccc84] text-transparent bg-clip-text dark:from-[#bbf7d0] dark:to-[#86efac]">
-            🐶 Meme Your SuperInu Moment
-          </h1>
-          <p className="text-gray-700 dark:text-gray-300">
-            Upload or snap a photo to start creating your personalized SuperInu image!
-          </p>
+      {/* Tabs */}
+      {activeTab === 'stats' && (
+        <div className="w-full max-w-md">
+          <YourStats />
+        </div>
+      )}
 
-          {/* Sticker selector */}
-          <div className="flex items-center justify-center gap-2">
+      {activeTab === 'about' && (
+        <div className="m-4 p-6 bg-white/5 border border-green-700/50 rounded-2xl shadow-lg space-y-4 w-full max-w-md">
+          <h2 className="text-xl font-bold">About SuperInu</h2>
+          <p className="text-sm opacity-90">
+            $SuperInu is a fun memecoin launched on streme.fun! You can stake it to earn more + $SUP.
+          </p>
+          <div className="flex gap-3">
+            <button onClick={handleBuy} className="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700">
+              Buy Now
+            </button>
+            <button onClick={handleStake} className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700">
+              Stake Now
+            </button>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'editor' && (
+        <div className="m-4 p-6 bg-white/5 border border-green-700/50 rounded-2xl shadow-lg space-y-6 text-center w-full max-w-md">
+          <h1 className="text-2xl font-extrabold text-green-300">💭 Meme Your SuperInu Moment</h1>
+          <p className="opacity-90">Upload or snap a photo to start creating your personalized SuperInu image!</p>
+
+          {/* Sticker mode selector */}
+          <div className="flex items-center justify-center gap-3">
             <button
-              onClick={() => setStickerChoice('regular')}
-              className={`px-3 py-1 rounded-lg text-sm border ${
-                stickerChoice === 'regular'
-                  ? 'bg-green-600 text-white border-green-600'
-                  : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200'
-              }`}
+              className={`px-4 py-2 rounded-lg ${stickerMode === 'regular' ? 'bg-green-600' : 'bg-white/10'}`}
+              onClick={() => setStickerMode('regular')}
             >
               Regular
             </button>
             <button
-              onClick={() => {
-                if (isStaker) setStickerChoice('staker');
-              }}
-              disabled={!isStaker}
-              className={`px-3 py-1 rounded-lg text-sm border ${
-                !isStaker
-                  ? 'opacity-50 cursor-not-allowed bg-white dark:bg-gray-700 text-gray-500'
-                  : stickerChoice === 'staker'
-                  ? 'bg-green-600 text-white border-green-600'
-                  : 'bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+              disabled={!canUseStakerSticker}
+              title={!canUseStakerSticker ? 'Stake to unlock' : ''}
+              className={`px-4 py-2 rounded-lg ${stickerMode === 'staker' ? 'bg-green-600' : 'bg-white/10'} ${
+                !canUseStakerSticker ? 'opacity-50 cursor-not-allowed' : ''
               }`}
-              title={!isStaker ? 'Stake to unlock' : 'Staker sticker'}
+              onClick={() => canUseStakerSticker && setStickerMode('staker')}
             >
               Staker
             </button>
           </div>
 
-          {/* Upload input */}
           <input
             type="file"
             accept="image/*"
             onChange={handlePhotoUpload}
-            className="w-full text-sm text-gray-700 dark:text-gray-200 file:bg-[#52a842] file:hover:bg-[#3e8d35] file:text-white file:rounded-lg file:px-4 file:py-2 file:border-none transition-colors"
+            className="w-full text-sm file:bg-green-600 file:text-white file:rounded-lg file:px-4 file:py-2 file:border-none"
           />
 
-          {/* Guard: must be a holder */}
-          {!canEdit && (
-            <div className="rounded-xl border border-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 p-3 text-sm">
-              You need to hold <b>$SUPERINU</b> in at least one verified wallet to use stickers.
-              <div className="mt-2 flex justify-center">
-                <button
-                  onClick={handleBuy}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg"
-                >
+          {/* Holder gate */}
+          {!canUseStickers && (
+            <div className="mt-4 rounded-xl border border-yellow-400/40 bg-yellow-500/10 p-4">
+              <p className="font-semibold text-yellow-300">
+                You need to hold <span className="font-black">$SUPERINU</span> in at least one verified wallet to use
+                stickers.
+              </p>
+              <div className="mt-3">
+                <button onClick={handleBuy} className="px-5 py-2 rounded-lg bg-fuchsia-600 hover:bg-fuchsia-700">
                   Buy Now
                 </button>
               </div>
             </div>
           )}
 
-          {photoURL && canEdit && (
+          {photoURL && canUseStickers && (
             <div className="mt-4 space-y-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400">PREVIEW WITH STICKER</p>
-
-              <StickerOverlay
-                ref={stickerRef}
-                photoUrl={photoURL}
-                stickerUrl={chosenStickerUrl}
-              />
-
+              <p className="text-sm opacity-80">Preview</p>
+              <StickerOverlay ref={stickerRef} photoUrl={photoURL} stickerUrl={stickerUrl} />
               <button
                 onClick={() => stickerRef.current?.shareImage()}
-                className="w-full py-3 bg-[#52a842] hover:bg-[#3e8d35] text-white text-lg rounded-xl transition"
+                className="w-full py-3 bg-green-600 hover:bg-green-700 rounded-xl"
               >
                 Share to Feed
               </button>
             </div>
           )}
-        </div>
-      )}
-
-      {/* Your Stats tab */}
-      {activeTab === 'stats' && (
-        <div className="w-full max-w-md">
-          <YourStats />
-          {/* quick peek of wallets used for eligibility */}
-          {verified.length > 0 && (
-            <details className="mt-3 text-sm">
-              <summary className="cursor-pointer text-gray-700 dark:text-gray-300">
-                Wallets used for eligibility
-              </summary>
-              <ul className="mt-2 list-disc pl-5 space-y-1">
-                {verified.map((a) => (
-                  <li key={a} className="font-mono break-all text-gray-700 dark:text-gray-300">
-                    {a}
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
-        </div>
-      )}
-
-      {/* About tab */}
-      {activeTab === 'about' && (
-        <div className="m-4 p-6 bg-white dark:bg-gray-800 border-2 border-[#52a842] dark:border-[#4ccc84] rounded-2xl shadow-lg space-y-4 w-full max-w-md transition-colors">
-          <div className="p-4 rounded-xl bg-purple-100 dark:bg-purple-900 text-center">
-            <h2 className="text-xl font-bold text-purple-800 dark:text-purple-200 mb-2">
-              About SuperInu
-            </h2>
-            <p className="text-sm text-purple-700 dark:text-purple-300 mb-4">
-              $SuperInu is a fun memecoin launched on streme.fun!<br />
-              You can stake it to earn more + $SUP.
-            </p>
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={handleBuy}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg"
-              >
-                Buy Now
-              </button>
-              <button
-                onClick={handleStake}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded-lg"
-              >
-                Stake Now
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </main>
