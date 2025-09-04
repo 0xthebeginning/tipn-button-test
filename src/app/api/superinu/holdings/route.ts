@@ -1,56 +1,98 @@
 // src/app/api/superinu/holdings/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { createPublicClient, http } from "viem";
-import { base } from "viem/chains";
-import { erc20Abi } from "viem";
 
-// SuperInu token
-const TOKEN = (process.env.SUPERINU_TOKEN_ADDRESS ??
-  "0x063eda1b84ceaf79b8cc4a41658b449e8e1f9eeb").toLowerCase();
+export const runtime = "edge"; // works fine with Alchemy RPC
 
-const ALCHEMY_RPC = process.env.ALCHEMY_BASE_RPC_URL!;
+type ReqBody = { addresses: string[] };
+
+type JsonRpcReq = {
+  jsonrpc: "2.0";
+  id: number;
+  method: "alchemy_getTokenBalances";
+  params: [string, { contractAddresses: string[] }];
+};
+
+type TokenBalance = { contractAddress: string; tokenBalance: string | null };
+type JsonRpcRes =
+  | { jsonrpc: "2.0"; id: number; result: { address: string; tokenBalances: TokenBalance[] } }
+  | { jsonrpc: "2.0"; id: number; error: { code: number; message: string } };
+
+type AddressResult = {
+  address: string;
+  ok: boolean;
+  balanceHex: string; // hex string (wei) from Alchemy
+  error?: string;
+};
+
+const ALCHEMY_BASE_RPC_URL = process.env.ALCHEMY_BASE_RPC_URL!;
+const SUPERINU_TOKEN = (process.env.SUPERINU_TOKEN_ADDRESS ?? "0x063eDA1b84ceaF79b8cC4a41658b449e8E1F9Eeb").toLowerCase();
 
 export async function POST(req: NextRequest) {
-  try {
-    const { addresses } = (await req.json()) as { addresses: string[] };
-    if (!Array.isArray(addresses) || addresses.length === 0) {
-      return NextResponse.json({ error: "No addresses provided" }, { status: 400 });
-    }
-
-    const client = createPublicClient({
-      chain: base,
-      transport: http(ALCHEMY_RPC),
-    });
-
-    const results = await Promise.all(
-      addresses.map(async (addr) => {
-        try {
-          const balance = await client.readContract({
-            abi: erc20Abi,
-            address: TOKEN as `0x${string}`,
-            functionName: "balanceOf",
-            args: [addr as `0x${string}`],
-          });
-
-          const ok = (balance as bigint) > 0n;
-          return { address: addr, ok, balance: balance.toString() };
-        } catch (err) {
-          return { address: addr, ok: false, balance: "0", error: (err as Error).message };
-        }
-      })
-    );
-
-    const holders = results.filter(r => r.ok).map(r => r.address);
-
-    return NextResponse.json({
-      token: TOKEN,
-      holders,
-      results,
-    });
-  } catch (err) {
-    return NextResponse.json(
-      { error: (err as Error).message ?? "Internal error" },
-      { status: 500 }
-    );
+  if (!ALCHEMY_BASE_RPC_URL) {
+    return NextResponse.json({ error: "Missing ALCHEMY_BASE_RPC_URL" }, { status: 500 });
   }
+
+  let body: ReqBody;
+  try {
+    body = (await req.json()) as ReqBody;
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const raw = Array.isArray(body.addresses) ? body.addresses : [];
+  const addresses = raw
+    .map((a) => (typeof a === "string" ? a.trim().toLowerCase() : ""))
+    .filter((a) => /^0x[a-f0-9]{40}$/.test(a));
+
+  if (addresses.length === 0) {
+    return NextResponse.json({ holders: [], results: [] });
+  }
+
+  // Build a JSON-RPC batch: one request per address
+  const batch: JsonRpcReq[] = addresses.map((addr, i) => ({
+    jsonrpc: "2.0",
+    id: i + 1,
+    method: "alchemy_getTokenBalances",
+    params: [addr, { contractAddresses: [SUPERINU_TOKEN] }],
+  }));
+
+  const resp = await fetch(ALCHEMY_BASE_RPC_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(batch),
+    cache: "no-store",
+  });
+
+  if (!resp.ok) {
+    return NextResponse.json({ error: `RPC HTTP ${resp.status}` }, { status: 502 });
+  }
+
+  const data = (await resp.json()) as JsonRpcRes[];
+  // Map responses back to addresses by "id" (which matches index+1)
+  const byId = new Map<number, string>();
+  addresses.forEach((addr, idx) => byId.set(idx + 1, addr));
+
+  const results: AddressResult[] = data.map((item) => {
+    const addr = byId.get("id" in item ? item.id : -1) ?? "0x";
+    if ("error" in item) {
+      return { address: addr, ok: false, balanceHex: "0x0", error: item.error.message };
+    }
+    const tb = item.result.tokenBalances?.[0];
+    const hex = (tb?.tokenBalance ?? "0x0") || "0x0";
+    let has = false;
+    try {
+      has = BigInt(hex) > 0n;
+    } catch {
+      // keep has=false
+    }
+    return { address: addr, ok: has, balanceHex: hex };
+  });
+
+  const holders = results.filter((r) => r.ok).map((r) => r.address);
+
+  return NextResponse.json({
+    token: SUPERINU_TOKEN,
+    holders,
+    results,
+  });
 }
