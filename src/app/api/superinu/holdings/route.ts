@@ -1,98 +1,112 @@
-// src/app/api/superinu/holdings/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "edge"; // works fine with Alchemy RPC
+// Use Node runtime for better compatibility
+export const runtime = "nodejs";
 
 type ReqBody = { addresses: string[] };
 
-type JsonRpcReq = {
-  jsonrpc: "2.0";
-  id: number;
-  method: "alchemy_getTokenBalances";
-  params: [string, { contractAddresses: string[] }];
-};
+const TOKEN =
+  (process.env.SUPERINU_TOKEN_ADDRESS ??
+    "0x063eDA1b84ceaF79b8cC4a41658b449e8e1f9eeb").toLowerCase();
 
-type TokenBalance = { contractAddress: string; tokenBalance: string | null };
-type JsonRpcRes =
-  | { jsonrpc: "2.0"; id: number; result: { address: string; tokenBalances: TokenBalance[] } }
-  | { jsonrpc: "2.0"; id: number; error: { code: number; message: string } };
+const ALCHEMY_RPC = process.env.ALCHEMY_BASE_RPC_URL;
 
-type AddressResult = {
-  address: string;
-  ok: boolean;
-  balanceHex: string; // hex string (wei) from Alchemy
-  error?: string;
-};
+// 4-byte selector of balanceOf(address): keccak256("balanceOf(address)") -> 0x70a08231
+const SELECTOR = "70a08231";
 
-const ALCHEMY_BASE_RPC_URL = process.env.ALCHEMY_BASE_RPC_URL!;
-const SUPERINU_TOKEN = (process.env.SUPERINU_TOKEN_ADDRESS ?? "0x063eDA1b84ceaF79b8cC4a41658b449e8E1F9Eeb").toLowerCase();
+function pad32(hexNo0x: string) {
+  return hexNo0x.padStart(64, "0");
+}
+
+function encodeBalanceOfData(address: string) {
+  const addr = address.toLowerCase().replace(/^0x/, "");
+  return "0x" + SELECTOR + pad32(addr);
+}
 
 export async function POST(req: NextRequest) {
-  if (!ALCHEMY_BASE_RPC_URL) {
-    return NextResponse.json({ error: "Missing ALCHEMY_BASE_RPC_URL" }, { status: 500 });
-  }
-
-  let body: ReqBody;
   try {
-    body = (await req.json()) as ReqBody;
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
-  const raw = Array.isArray(body.addresses) ? body.addresses : [];
-  const addresses = raw
-    .map((a) => (typeof a === "string" ? a.trim().toLowerCase() : ""))
-    .filter((a) => /^0x[a-f0-9]{40}$/.test(a));
-
-  if (addresses.length === 0) {
-    return NextResponse.json({ holders: [], results: [] });
-  }
-
-  // Build a JSON-RPC batch: one request per address
-  const batch: JsonRpcReq[] = addresses.map((addr, i) => ({
-    jsonrpc: "2.0",
-    id: i + 1,
-    method: "alchemy_getTokenBalances",
-    params: [addr, { contractAddresses: [SUPERINU_TOKEN] }],
-  }));
-
-  const resp = await fetch(ALCHEMY_BASE_RPC_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(batch),
-    cache: "no-store",
-  });
-
-  if (!resp.ok) {
-    return NextResponse.json({ error: `RPC HTTP ${resp.status}` }, { status: 502 });
-  }
-
-  const data = (await resp.json()) as JsonRpcRes[];
-  // Map responses back to addresses by "id" (which matches index+1)
-  const byId = new Map<number, string>();
-  addresses.forEach((addr, idx) => byId.set(idx + 1, addr));
-
-  const results: AddressResult[] = data.map((item) => {
-    const addr = byId.get("id" in item ? item.id : -1) ?? "0x";
-    if ("error" in item) {
-      return { address: addr, ok: false, balanceHex: "0x0", error: item.error.message };
+    if (!ALCHEMY_RPC) {
+      return NextResponse.json(
+        { error: "Missing ALCHEMY_BASE_RPC_URL env var" },
+        { status: 500 }
+      );
     }
-    const tb = item.result.tokenBalances?.[0];
-    const hex = (tb?.tokenBalance ?? "0x0") || "0x0";
-    let has = false;
-    try {
-      has = BigInt(hex) > 0n;
-    } catch {
-      // keep has=false
+
+    const body = (await req.json()) as ReqBody;
+    const input = Array.isArray(body.addresses) ? body.addresses : [];
+    const addresses = input
+      .map((a) => (typeof a === "string" ? a.trim().toLowerCase() : ""))
+      .filter((a) => /^0x[a-f0-9]{40}$/.test(a));
+
+    if (addresses.length === 0) {
+      return NextResponse.json({ token: TOKEN, holders: [], results: [] });
     }
-    return { address: addr, ok: has, balanceHex: hex };
-  });
 
-  const holders = results.filter((r) => r.ok).map((r) => r.address);
+    // Build JSON-RPC batch
+    const batch = addresses.map((addr, i) => ({
+      jsonrpc: "2.0",
+      id: i + 1,
+      method: "eth_call",
+      params: [
+        {
+          to: TOKEN,
+          data: encodeBalanceOfData(addr),
+        },
+        "latest",
+      ],
+    }));
 
-  return NextResponse.json({
-    token: SUPERINU_TOKEN,
-    holders,
-    results,
-  });
+    const resp = await fetch(ALCHEMY_RPC, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(batch),
+      // Don’t let the platform cache RPC responses
+      cache: "no-store",
+    });
+
+    if (!resp.ok) {
+      return NextResponse.json(
+        { error: `Alchemy RPC HTTP ${resp.status}` },
+        { status: 502 }
+      );
+    }
+
+    type RpcItem = { id: number; result?: string; error?: { code: number; message: string } };
+    const json = (await resp.json()) as RpcItem[];
+
+    const results = addresses.map((addr, idx) => {
+      const item = json.find((j) => j.id === idx + 1);
+      if (!item) return { address: addr, ok: false, balance: "0", error: "missing response" };
+
+      if (item.error) {
+        return {
+          address: addr,
+          ok: false,
+          balance: "0",
+          error: item.error.message ?? `rpc error ${item.error.code}`,
+        };
+      }
+
+      const hex = (item.result ?? "0x0").toString();
+      // hex -> bigint -> string
+      let balance = "0";
+      try {
+        balance = BigInt(hex).toString();
+      } catch {
+        balance = "0";
+      }
+      return { address: addr, ok: balance !== "0", balance };
+    });
+
+    const holders = results.filter((r) => r.ok).map((r) => r.address);
+
+    return NextResponse.json({
+      token: TOKEN,
+      holders,
+      results,
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Holdings check failed";
+    return NextResponse.json({ error: msg }, { status: 502 });
+  }
 }
