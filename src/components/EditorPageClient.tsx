@@ -30,7 +30,6 @@ export default function EditorPageClient() {
   const [activeTab, setActiveTab] = useState<TabKey>('editor');
 
   // Status state
-  const [allWallets, setAllWallets] = useState<string[]>([]);
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [holdsSuperInu, setHoldsSuperInu] = useState(false);
