@@ -53,7 +53,7 @@ export default function EditorPageClient() {
   const canUseStakerSticker = status.isStaker;
 
   return (
-    <main className="min-h-screen bg-[#0f1a14] dark:bg-gray-900 flex flex-col items-center justify-start pt-6 transition-colors text-white">
+    <main className="min-h-screen bg-transparent flex flex-col items-center justify-start pt-6 transition-colors">
       {/* Top tabs */}
       <div className="flex gap-4 mb-2">
         {(['editor', 'stats', 'about'] as TabKey[]).map((key) => (

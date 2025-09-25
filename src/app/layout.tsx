@@ -12,24 +12,15 @@ export const metadata: Metadata = {
     title: "SuperInu",
     description: "Create and share custom SuperInu memes!",
     url: "https://superinu-miniapp.vercel.app",
-    images: [
-      {
-        url: "https://superinu-miniapp.vercel.app/splash.png",
-        width: 1200,
-        height: 630,
-        alt: "SuperInu Meme Preview",
-      },
-    ],
+    images: [{ url: "https://superinu-miniapp.vercel.app/splash.png", width: 1200, height: 630, alt: "SuperInu Meme Preview" }],
   },
-  other: {
-    "fc:miniapp": JSON.stringify(getMiniAppEmbedMetadata()),
-  },
+  other: { "fc:miniapp": JSON.stringify(getMiniAppEmbedMetadata()) },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
+      <body className="bg-[#f1fff0] text-gray-900 dark:bg-gray-900 dark:text-white transition-colors">
         <DarkModeWrapper>
           <ClientWrapper>{children}</ClientWrapper>
         </DarkModeWrapper>

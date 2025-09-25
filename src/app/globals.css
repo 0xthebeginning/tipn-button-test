@@ -2,11 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Let the browser know we support both color schemes */
+:root { color-scheme: light dark; }
+
+/* Default (light) theme variables */
 :root {
-  --background: #ffffff;
+  --background: #f1fff0;       /* soft green you’ve been using */
   --foreground: #171717;
 }
 
+/* Auto-dark fallback (system) */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -14,20 +19,31 @@
   }
 }
 
+/* Explicit dark-mode override via Tailwind's `.dark` class on <html> */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+html, body {
+  min-height: 100%;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: 'Inter', Helvetica, Arial, sans-serif;
+
+  /* Smooth theme switch */
+  transition: background-color 200ms ease, color 200ms ease, background 200ms ease;
 }
 
+/* Hide scrollbars (you already had this) */
 * {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;           /* Firefox */
+  -ms-overflow-style: none;        /* IE and Edge */
 }
-
-*::-webkit-scrollbar {
-  display: none;
-}
+*::-webkit-scrollbar { display: none; }
 
 @layer base {
   :root {
