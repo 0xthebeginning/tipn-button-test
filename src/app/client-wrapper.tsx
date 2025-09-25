@@ -14,9 +14,9 @@ import { base as appkitBase } from '@reown/appkit/networks';
 
 import DarkModeToggle from '~/components/ui/DarkModeToggle';
 
-const projectId = process.env.NEXT_PUBLIC_WC_PROJECT_ID!;
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!;
 if (!projectId) {
-  console.error('Missing NEXT_PUBLIC_WC_PROJECT_ID');
+  console.error('Missing NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID');
 }
 
 /** 
