@@ -22,16 +22,37 @@ export type SuperInuStatus = {
   stakingResults: AddressCheck[];
 };
 
-export function useSuperInuStatus(): SuperInuStatus {
+type UseSuperInuStatusOptions = {
+  /** Optional additional addresses (e.g., from WalletConnect). */
+  extraAddresses?: string[];
+};
+
+function isAddr(x: string): x is `0x${string}` {
+  return /^0x[a-f0-9]{40}$/.test(x);
+}
+
+export function useSuperInuStatus(opts: UseSuperInuStatusOptions = {}): SuperInuStatus {
   const { context } = useMiniApp();
   const fid = context?.user?.fid ?? null;
 
   const [custody, setCustody] = useState<string | null>(null);
   const [verified, setVerified] = useState<string[]>([]);
-  const allWallets = useMemo(
-    () => [...new Set([...(custody ? [custody] : []), ...verified])],
-    [custody, verified]
+
+  // normalize & validate the optional extra addresses
+  const extraJoined = (opts.extraAddresses ?? []).join('|'); // stable dep key
+  const extra = useMemo(
+    () =>
+      (opts.extraAddresses ?? [])
+        .map((a) => (typeof a === 'string' ? a.trim().toLowerCase() : ''))
+        .filter(isAddr),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [extraJoined]
   );
+
+  const allWallets = useMemo(() => {
+    const base = [...(custody ? [custody] : []), ...verified, ...extra];
+    return [...new Set(base.map((a) => a.toLowerCase()))];
+  }, [custody, verified, extra]);
 
   const [loadingUser, setLoadingUser] = useState(false);
   const [loadingHoldings, setLoadingHoldings] = useState(false);
@@ -44,18 +65,12 @@ export function useSuperInuStatus(): SuperInuStatus {
   const [holdingsResults, setHoldingsResults] = useState<AddressCheck[]>([]);
   const [stakingResults, setStakingResults] = useState<AddressCheck[]>([]);
 
-  const isHolder = useMemo(
-    () => holdingsResults.some((r) => r.ok),
-    [holdingsResults]
-  );
-  const isStaker = useMemo(
-    () => stakingResults.some((r) => r.ok),
-    [stakingResults]
-  );
+  const isHolder = useMemo(() => holdingsResults.some((r) => r.ok), [holdingsResults]);
+  const isStaker = useMemo(() => stakingResults.some((r) => r.ok), [stakingResults]);
 
-  // 1) Get user wallets via our Neynar proxy
+  // 1) Get user wallets via our Neynar proxy (only if we have a fid)
   useEffect(() => {
-    if (!fid) return;
+    if (!fid) return; // allow extra-only flow when opened outside FC
     let cancelled = false;
 
     (async () => {
@@ -68,7 +83,7 @@ export function useSuperInuStatus(): SuperInuStatus {
           await res.json();
         if (!cancelled) {
           setCustody(data.custody_address ?? null);
-          setVerified((data.verifications ?? []).map((a) => a.toLowerCase()));
+          setVerified((data.verifications ?? []).map((a) => a.toLowerCase()).filter(isAddr));
         }
       } catch (e) {
         if (!cancelled) setErrorUser(e instanceof Error ? e.message : 'Failed to load user');
@@ -112,7 +127,7 @@ export function useSuperInuStatus(): SuperInuStatus {
     return () => {
       cancelled = true;
     };
-  }, [allWallets.join('|')]); // stable enough key for small lists
+  }, [allWallets.join('|')]);
 
   // 3) Check staked via our Alchemy-backed route
   useEffect(() => {
@@ -173,12 +188,14 @@ export default function YourStats() {
       <h2 className="text-xl font-bold text-gray-900 dark:text-white">Your Stats</h2>
 
       {s.fid ? (
-        <p className="text-sm text-gray-700 dark:text-gray-300">FID: <span className="font-mono">{s.fid}</span></p>
+        <p className="text-sm text-gray-700 dark:text-gray-300">
+          FID: <span className="font-mono">{s.fid}</span>
+        </p>
       ) : (
         <p className="text-sm text-gray-500">Open in Farcaster to see FID.</p>
       )}
 
-      {/* All wallets (custody + verified) */}
+      {/* All wallets (custody + verified + extra) */}
       <div className="text-sm">
         <div className="font-semibold text-gray-800 dark:text-gray-200">
           All Wallets <span className="opacity-70">({s.allWallets.length})</span>
@@ -187,7 +204,9 @@ export default function YourStats() {
           <summary className="cursor-pointer text-gray-600 dark:text-gray-300">Show list</summary>
           <ul className="mt-2 space-y-1">
             {s.allWallets.map((a) => (
-              <li key={a} className="font-mono text-xs break-all">{a}</li>
+              <li key={a} className="font-mono text-xs break-all">
+                {a}
+              </li>
             ))}
           </ul>
         </details>
@@ -199,7 +218,11 @@ export default function YourStats() {
         {s.loadingHoldings && <p className="text-gray-500">Checking…</p>}
         {s.errorHoldings && <p className="text-red-500">Error: {s.errorHoldings}</p>}
         {!s.loadingHoldings && !s.errorHoldings && (
-          <p className={s.isHolder ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-gray-700 dark:text-gray-300'}>
+          <p
+            className={
+              s.isHolder ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-gray-700 dark:text-gray-300'
+            }
+          >
             {s.isHolder ? 'Yes' : 'No'}
           </p>
         )}
@@ -209,7 +232,7 @@ export default function YourStats() {
             <ul className="mt-2 space-y-1">
               {s.holdingsResults.map((r) => (
                 <li key={r.address} className="font-mono text-xs break-all">
-                  {short(r.address)} — {r.ok ? `balance: ${r.balance}` : (r.error ? `error: ${r.error}` : 'no tokens')}
+                  {short(r.address)} — {r.ok ? `balance: ${r.balance}` : r.error ? `error: ${r.error}` : 'no tokens'}
                 </li>
               ))}
             </ul>
@@ -223,7 +246,11 @@ export default function YourStats() {
         {s.loadingStake && <p className="text-gray-500">Checking…</p>}
         {s.errorStake && <p className="text-red-500">Error: {s.errorStake}</p>}
         {!s.loadingStake && !s.errorStake && (
-          <p className={s.isStaker ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-gray-700 dark:text-gray-300'}>
+          <p
+            className={
+              s.isStaker ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-gray-700 dark:text-gray-300'
+            }
+          >
             {s.isStaker ? 'Yes' : 'No'}
           </p>
         )}
@@ -233,7 +260,7 @@ export default function YourStats() {
             <ul className="mt-2 space-y-1">
               {s.stakingResults.map((r) => (
                 <li key={r.address} className="font-mono text-xs break-all">
-                  {short(r.address)} — {r.ok ? `balance: ${r.balance}` : (r.error ? `error: ${r.error}` : 'no stake')}
+                  {short(r.address)} — {r.ok ? `balance: ${r.balance}` : r.error ? `error: ${r.error}` : 'no stake'}
                 </li>
               ))}
             </ul>

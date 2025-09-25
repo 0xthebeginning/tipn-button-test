@@ -1,11 +1,16 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import StickerOverlay, { StickerOverlayHandle } from './StickerOverlay';
 import sdk from '@farcaster/miniapp-sdk';
 import YourStats, { useSuperInuStatus } from './YourStats';
+import { useAppKitAccount } from '@reown/appkit/react';
 
 type TabKey = 'editor' | 'stats' | 'about';
+
+function isAddr(x: string): x is `0x${string}` {
+  return typeof x === 'string' && /^0x[a-f0-9]{40}$/i.test(x);
+}
 
 export default function EditorPageClient() {
   const [photoURL, setPhotoURL] = useState<string | null>(null);
@@ -13,10 +18,22 @@ export default function EditorPageClient() {
   const [stickerMode, setStickerMode] = useState<'regular' | 'staker'>('regular');
   const stickerRef = useRef<StickerOverlayHandle>(null);
 
-  // 🔁 Single source of truth for status used in BOTH places
-  const status = useSuperInuStatus();
+  // 🔌 Connected wallet via AppKit (WalletConnect)
+  const { address } = useAppKitAccount();
+  const extraAddresses = useMemo(
+    () => (isAddr(address ?? '') ? [address!.toLowerCase()] : []),
+    [address]
+  );
+
+  // ✅ Use the hook with optional connected address
+  const status = useSuperInuStatus({ extraAddresses });
+
   const score = (status.isHolder ? 1 : 0) + (status.isStaker ? 1 : 0);
-  const statusLabel = status.isHolder ? (status.isStaker ? 'Holder + Staker' : 'Holder') : 'Not Holder';
+  const statusLabel = status.isHolder
+    ? status.isStaker
+      ? 'Holder + Staker'
+      : 'Holder'
+    : 'Not Holder';
 
   function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
@@ -45,9 +62,7 @@ export default function EditorPageClient() {
 
   // choose sticker art by mode
   const stickerUrl =
-    stickerMode === 'staker'
-      ? '/superinuStaker.png' // place this file in /public
-      : '/superinuMain2.png';
+    stickerMode === 'staker' ? '/superinuStaker.png' : '/superinuMain2.png';
 
   const canUseStickers = status.isHolder; // gate editor by holding
   const canUseStakerSticker = status.isStaker;
@@ -80,6 +95,7 @@ export default function EditorPageClient() {
       {/* Tabs */}
       {activeTab === 'stats' && (
         <div className="w-full max-w-md">
+          {/* No props needed here */}
           <YourStats />
         </div>
       )}
@@ -137,8 +153,7 @@ export default function EditorPageClient() {
           {!canUseStickers && (
             <div className="mt-4 rounded-xl border border-yellow-400/40 bg-yellow-500/10 p-4">
               <p className="font-semibold text-yellow-300">
-                You need to hold <span className="font-black">$SUPERINU</span> in at least one verified wallet to use
-                stickers.
+                You need to hold <span className="font-black">$SUPERINU</span> in at least one wallet to use stickers.
               </p>
               <div className="mt-3">
                 <button onClick={handleBuy} className="px-5 py-2 rounded-lg bg-fuchsia-600 hover:bg-fuchsia-700">
