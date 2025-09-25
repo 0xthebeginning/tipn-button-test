@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import { getMiniAppEmbedMetadata } from "~/lib/utils";
 import DarkModeWrapper from "./dark-wrapper";
 import ClientWrapper from "./client-wrapper";
-import '@reown/appkit/react/core/components';
 
 export const metadata: Metadata = {
   title: "SuperInu",
