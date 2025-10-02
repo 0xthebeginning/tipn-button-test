@@ -6,6 +6,8 @@ import sdk from '@farcaster/miniapp-sdk';
 import YourStats, { useSuperInuStatus } from './YourStats';
 import { useAppKitAccount } from '@reown/appkit/react';
 
+import WalletStandardDebug from './WalletStandardDebug';
+
 type TabKey = 'editor' | 'stats' | 'about';
 
 function isAddr(x: string): x is `0x${string}` {
@@ -140,6 +142,11 @@ export default function EditorPageClient() {
             >
               Staker
             </button>
+          </div>
+
+          {/* Wallet debug output - for testing Seeker/Backpack detection */}
+          <div className="mt-4 w-full max-w-md">
+            <WalletStandardDebug />
           </div>
 
           <input
