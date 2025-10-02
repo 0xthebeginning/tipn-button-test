@@ -113,4 +113,4 @@ export default function WalletStandardDebug() {
       ))}
     </ul>
   </div>
-);
+)};
