@@ -4,45 +4,47 @@ import { useEffect, useState } from 'react';
 import { getWallets } from '@wallet-standard/app';
 import type { Wallet } from '@wallet-standard/base';
 
-// Strictly typed Wallet with label
-interface LabeledWallet extends Wallet {
-  label: string;
-}
-
-// Runtime type guard
-function isLabeledWallet(wallet: Wallet): wallet is LabeledWallet {
-  return typeof (wallet as unknown as Record<string, unknown>).label === 'string';
+function hasLabel(wallet: unknown): wallet is Wallet & { label: string } {
+  return (
+    typeof wallet === 'object' &&
+    wallet !== null &&
+    'label' in wallet &&
+    typeof (wallet as Record<string, unknown>)['label'] === 'string'
+  );
 }
 
 export default function WalletStandardDebug() {
-  const [walletLabels, setWalletLabels] = useState<string[]>([]);
+  const [debugLines, setDebugLines] = useState<string[]>([]);
 
   useEffect(() => {
     const detectWallets = async () => {
       try {
         const walletsInterface = await getWallets();
-        const walletsArray = [...walletsInterface.get()]; // readonly → mutable copy
+        const walletsArray = [...walletsInterface.get()];
+
+        const output: string[] = [];
 
         walletsArray.forEach((wallet, i) => {
-          console.log(`📦 Wallet ${i + 1}:`, wallet);
+          const labels = walletsArray.map((wallet) =>
+            hasLabel(wallet) ? wallet.label : 'Unnamed Wallet'
+            );
+          const chains = wallet.chains.join(', ');
+          const features = Object.keys(wallet.features).join(', ');
+          const accounts = wallet.accounts.length;
 
-          if (isLabeledWallet(wallet)) {
-            console.log(`🔖 Label: ${wallet.label}`);
-          }
-
-          console.log(`🔗 Chains:`, wallet.chains);
-          console.log(`👛 Accounts:`, wallet.accounts);
-          console.log(`⚙️ Features:`, wallet.features);
+          output.push(`Wallet ${i + 1}: ${labels}`);
+          output.push(`🔗 Chains: ${chains}`);
+          output.push(`👛 Accounts: ${accounts}`);
+          output.push(`⚙️ Features: ${features}`);
         });
 
-        const labels = walletsArray.map((wallet) =>
-          isLabeledWallet(wallet) ? wallet.label : 'Unnamed Wallet'
-        );
+        if (output.length === 0) {
+          output.push('⚠️ No wallets detected.');
+        }
 
-        console.log('🧠 Wallets detected via Wallet Standard:', walletsArray);
-        setWalletLabels(labels);
+        setDebugLines(output);
       } catch (err) {
-        console.error('❌ Wallet detection failed:', err);
+        setDebugLines([`❌ Wallet detection failed: ${String(err)}`]);
       }
     };
 
@@ -52,17 +54,11 @@ export default function WalletStandardDebug() {
   return (
     <div className="p-4 text-sm text-white bg-black/20 rounded-xl mt-4">
       <h2 className="text-md font-semibold">Wallet Standard Debug</h2>
-      {walletLabels.length > 0 ? (
-        <ul className="mt-2 list-disc list-inside">
-          {walletLabels.map((label, idx) => (
-            <li key={idx}>{label}</li>
-          ))}
-        </ul>
-      ) : (
-        <p className="mt-2 text-gray-400">
-          No Wallet Standard providers found.
-        </p>
-      )}
+      <ul className="mt-2 list-disc list-inside space-y-1">
+        {debugLines.map((line, i) => (
+          <li key={i}>{line}</li>
+        ))}
+      </ul>
     </div>
   );
 }
