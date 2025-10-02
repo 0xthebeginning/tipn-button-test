@@ -1,12 +1,13 @@
 'use client';
 
-import { useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import StickerOverlay, { StickerOverlayHandle } from './StickerOverlay';
 import sdk from '@farcaster/miniapp-sdk';
 import YourStats, { useSuperInuStatus } from './YourStats';
 import { useAppKitAccount } from '@reown/appkit/react';
 
 import WalletStandardDebug from './WalletStandardDebug';
+import { registerMobileWalletAdapter } from './register-mwa';
 
 type TabKey = 'editor' | 'stats' | 'about';
 
@@ -15,6 +16,11 @@ function isAddr(x: string): x is `0x${string}` {
 }
 
 export default function EditorPageClient() {
+
+  useEffect(() => {
+    registerMobileWalletAdapter(); // ✅ This runs once on load
+  }, []);
+
   const [photoURL, setPhotoURL] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>('editor');
   const [stickerMode, setStickerMode] = useState<'regular' | 'staker'>('regular');
