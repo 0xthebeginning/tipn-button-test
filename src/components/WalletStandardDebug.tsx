@@ -55,45 +55,62 @@ export default function WalletStandardDebug() {
   }, []);
 
   return (
-    <div className="p-4 text-sm text-white bg-black/20 rounded-xl mt-4">
-      <h2 className="text-md font-semibold">Wallet Standard Debug</h2>
+  <div className="p-4 text-sm text-white bg-black/20 rounded-xl mt-4">
+    <h2 className="text-md font-semibold">Wallet Standard Debug</h2>
 
-      {/* Summary Lines */}
-      <ul className="mt-2 list-disc list-inside space-y-1">
-        {debugLines.map((line, i) => (
-          <li key={i}>{line}</li>
-        ))}
-      </ul>
+    {/* Summary Lines */}
+    <ul className="mt-2 list-disc list-inside space-y-1">
+      {debugLines.map((line, i) => (
+        <li key={i}>{line}</li>
+      ))}
+    </ul>
 
-      {/* Detailed Wallet Breakdown */}
-      <ul className="mt-2 list-disc list-inside space-y-2">
-        {wallets.map((wallet, idx) => (
-          <li key={idx} className="text-left">
-            <div className="font-bold">Wallet {idx + 1}</div>
-            <div>Chains: {wallet.chains.join(', ')}</div>
-            <div>
-              Accounts:
-              {wallet.accounts.length === 0 ? (
-                ' (none)'
-              ) : (
-                <ul className="ml-4 list-disc">
-                  {wallet.accounts.map((acct, i) => (
-                    <li key={i}>{acct.address}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            <div>
-              Features:
+    {/* Connect Button */}
+    <button
+      className="mt-4 px-4 py-2 bg-purple-600 text-white rounded"
+      onClick={async () => {
+        const walletsInterface = await getWallets();
+        const wallets = walletsInterface.get();
+
+        const first = wallets[0];
+        if (first?.features['standard:connect']) {
+          const connect = first.features['standard:connect'].connect;
+          const result = await connect();
+          console.log('🔐 Connected accounts:', result.accounts);
+        }
+      }}
+    >
+      Connect Wallet
+    </button>
+
+    {/* Detailed Wallet Breakdown */}
+    <ul className="mt-4 list-disc list-inside space-y-2">
+      {wallets.map((wallet, idx) => (
+        <li key={idx} className="text-left">
+          <div className="font-bold">Wallet {idx + 1}</div>
+          <div>Chains: {wallet.chains.join(', ')}</div>
+          <div>
+            Accounts:
+            {wallet.accounts.length === 0 ? (
+              ' (none)'
+            ) : (
               <ul className="ml-4 list-disc">
-                {Object.keys(wallet.features).map((feat, i) => (
-                  <li key={i}>{feat}</li>
+                {wallet.accounts.map((acct, i) => (
+                  <li key={i}>{acct.address}</li>
                 ))}
               </ul>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+            )}
+          </div>
+          <div>
+            Features:
+            <ul className="ml-4 list-disc">
+              {Object.keys(wallet.features).map((feat, i) => (
+                <li key={i}>{feat}</li>
+              ))}
+            </ul>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
