@@ -12,7 +12,7 @@ export function registerMobileWalletAdapter() {
   registerMwa({
     appIdentity: {
       name: 'SuperInu',
-      uri: 'https://superinu.xyz',
+      uri: 'https://superinu-miniapp.vercel.app/',
       icon: '/icon.png', // or a valid external image URL
     },
     authorizationCache: createDefaultAuthorizationCache(),
