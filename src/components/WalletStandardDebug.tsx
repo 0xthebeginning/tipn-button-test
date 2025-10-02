@@ -74,9 +74,12 @@ export default function WalletStandardDebug() {
 
         const first = wallets[0];
         if (first?.features['standard:connect']) {
-          const connect = first.features['standard:connect'].connect;
-          const result = await connect();
-          console.log('🔐 Connected accounts:', result.accounts);
+        const standardConnect = first.features['standard:connect'] as {
+        connect: () => Promise<{ accounts: { address: string }[] }>
+        };
+
+        const result = await standardConnect.connect();
+        console.log('🔐 Connected accounts:', result.accounts);
         }
       }}
     >
@@ -113,4 +116,5 @@ export default function WalletStandardDebug() {
       ))}
     </ul>
   </div>
-)};
+);
+}
