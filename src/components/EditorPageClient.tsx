@@ -6,7 +6,7 @@ import sdk from '@farcaster/miniapp-sdk';
 import YourStats, { useSuperInuStatus } from './YourStats';
 import { useAppKitAccount } from '@reown/appkit/react';
 
-import WalletStandardDebug from './WalletStandardDebug';
+//import WalletStandardDebug from './WalletStandardDebug';
 import { registerMobileWalletAdapter } from './register-mwa';
 
 type TabKey = 'editor' | 'stats' | 'about';
@@ -150,10 +150,11 @@ export default function EditorPageClient() {
             </button>
           </div>
 
-          {/* Wallet debug output - for testing Seeker/Backpack detection */}
+          {/* Wallet debug output - for testing Seeker/Backpack detection
           <div className="mt-4 w-full max-w-md">
             <WalletStandardDebug />
           </div>
+          */}
 
           <input
             type="file"
