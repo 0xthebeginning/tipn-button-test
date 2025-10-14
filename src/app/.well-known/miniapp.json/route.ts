@@ -22,6 +22,10 @@ export async function GET() {
         payload: "eyJkb21haW4iOiJzdXBlcmludS1taW5pYXBwLnZlcmNlbC5hcHAifQ",
         signature: "yxEn/4kbNiUK3SPK39qwctGsHjQGjVVnIlWY3jwNQwB3lw3xJXT3TBePtkFk7DswVufsH3p5bJc1Eorsk8NkgBs=",
       },
+      baseBuilder: {
+        allowedAddresses:
+          "0xdE2334fDB25481f138Bec792d1f37A1dCA0F329F",
+      },
     },
     {
       headers: {
