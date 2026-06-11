@@ -48,3 +48,71 @@ export async function deleteUserNotificationDetails(
     localStore.delete(key);
   }
 }
+
+export interface KeepyUppyLeaderboardEntry {
+  fid: number;
+  username?: string;
+  displayName?: string;
+  pfpUrl?: string;
+  score: number;
+  updatedAt: number;
+}
+
+const keepyUppyLocalScores = new Map<number, KeepyUppyLeaderboardEntry>();
+
+const KEEPY_UPPY_LEADERBOARD_KEY = `${APP_NAME}:keepy-uppy:leaderboard`;
+
+function getKeepyUppyUserKey(fid: number): string {
+  return `${APP_NAME}:keepy-uppy:user:${fid}`;
+}
+
+export async function submitKeepyUppyScore(
+  entry: Omit<KeepyUppyLeaderboardEntry, "updatedAt">
+): Promise<KeepyUppyLeaderboardEntry> {
+  const normalized: KeepyUppyLeaderboardEntry = {
+    ...entry,
+    score: Math.max(0, Math.floor(entry.score)),
+    updatedAt: Date.now(),
+  };
+
+  if (redis) {
+    const userKey = getKeepyUppyUserKey(normalized.fid);
+    const previous = await redis.get<KeepyUppyLeaderboardEntry>(userKey);
+    if (previous && previous.score >= normalized.score) return previous;
+
+    await redis.set(userKey, normalized);
+    await redis.zadd(KEEPY_UPPY_LEADERBOARD_KEY, {
+      score: normalized.score,
+      member: String(normalized.fid),
+    });
+    return normalized;
+  }
+
+  const previous = keepyUppyLocalScores.get(normalized.fid);
+  if (previous && previous.score >= normalized.score) return previous;
+  keepyUppyLocalScores.set(normalized.fid, normalized);
+  return normalized;
+}
+
+export async function getKeepyUppyLeaderboard(
+  limit = 10
+): Promise<KeepyUppyLeaderboardEntry[]> {
+  if (redis) {
+    const fids = await redis.zrange<string[]>(
+      KEEPY_UPPY_LEADERBOARD_KEY,
+      0,
+      limit - 1,
+      { rev: true }
+    );
+
+    const entries = await Promise.all(
+      fids.map((fid) => redis.get<KeepyUppyLeaderboardEntry>(getKeepyUppyUserKey(Number(fid))))
+    );
+
+    return entries.filter((entry): entry is KeepyUppyLeaderboardEntry => Boolean(entry));
+  }
+
+  return Array.from(keepyUppyLocalScores.values())
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+}
