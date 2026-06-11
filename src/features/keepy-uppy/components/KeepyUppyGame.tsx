@@ -1,10 +1,11 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useMiniApp } from '@neynar/react';
 import styles from './KeepyUppy.module.css';
 import { GameCanvas, type GameCanvasHandle } from './GameCanvas';
 import { GameHUD } from './GameHUD';
-import { GameOverPanel } from './GameOverPanel';
+import { GameOverPanel, type LeaderboardEntry } from './GameOverPanel';
 import { StartPanel } from './StartPanel';
 import type { GameSnapshot } from '../types';
 
@@ -16,17 +17,61 @@ const INITIAL_SNAPSHOT: GameSnapshot = {
   isNewBest: false,
 };
 
-/**
- * The whole Keepy-Uppy screen. The engine lives inside GameCanvas (refs,
- * no re-renders at 60fps); this component only holds the lightweight
- * snapshot that drives the HUD and the idle / game-over panels.
- *
- * Self-contained on purpose: the /keepy-uppy route just renders this,
- * and the rest of the Superinu miniapp never imports anything deeper.
- */
 export function KeepyUppyGame() {
+  const { context } = useMiniApp();
   const [snapshot, setSnapshot] = useState<GameSnapshot>(INITIAL_SNAPSHOT);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [leaderboardStatus, setLeaderboardStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const submittedScoreRef = useRef<string>('');
   const canvasHandle = useRef<GameCanvasHandle>(null);
+
+  const refreshLeaderboard = useCallback(async () => {
+    const res = await fetch('/api/keepy-uppy/leaderboard?limit=10', { cache: 'no-store' });
+    if (!res.ok) throw new Error('Failed to fetch leaderboard');
+    const data = await res.json();
+    setLeaderboard(Array.isArray(data.leaderboard) ? data.leaderboard : []);
+  }, []);
+
+  useEffect(() => {
+    if (snapshot.status !== 'gameOver') return;
+
+    const submitKey = `${context?.user?.fid ?? 'anon'}:${snapshot.score}:${snapshot.best}`;
+    if (submittedScoreRef.current === submitKey) return;
+    submittedScoreRef.current = submitKey;
+
+    let cancelled = false;
+
+    async function syncScore() {
+      setLeaderboardStatus('loading');
+      try {
+        if (context?.user?.fid) {
+          await fetch('/api/keepy-uppy/score', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fid: context.user.fid,
+              username: context.user.username,
+              displayName: context.user.displayName,
+              pfpUrl: context.user.pfpUrl,
+              score: snapshot.score,
+            }),
+          });
+        }
+
+        await refreshLeaderboard();
+        if (!cancelled) setLeaderboardStatus('ready');
+      } catch (error) {
+        console.error('Failed to sync keepy-uppy leaderboard:', error);
+        if (!cancelled) setLeaderboardStatus('error');
+      }
+    }
+
+    syncScore();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [context?.user, refreshLeaderboard, snapshot.best, snapshot.score, snapshot.status]);
 
   const handlePlayAgain = useCallback(() => {
     canvasHandle.current?.start();
@@ -39,7 +84,13 @@ export function KeepyUppyGame() {
         <GameHUD snapshot={snapshot} />
         {snapshot.status === 'idle' && <StartPanel snapshot={snapshot} />}
         {snapshot.status === 'gameOver' && (
-          <GameOverPanel snapshot={snapshot} onPlayAgain={handlePlayAgain} />
+          <GameOverPanel
+            snapshot={snapshot}
+            leaderboard={leaderboard}
+            leaderboardStatus={leaderboardStatus}
+            currentFid={context?.user?.fid}
+            onPlayAgain={handlePlayAgain}
+          />
         )}
       </main>
     </div>

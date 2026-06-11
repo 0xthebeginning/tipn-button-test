@@ -266,3 +266,77 @@
   box-shadow: none;
   font-weight: 700;
 }
+
+/* ---------- Leaderboard ---------- */
+
+.leaderboard {
+  width: 100%;
+  border-radius: 18px;
+  background: rgba(216, 255, 209, 0.55);
+  border: 2px solid rgba(16, 63, 34, 0.18);
+  padding: 10px;
+}
+
+.leaderboardTitle {
+  font-size: 14px;
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+
+.leaderboardMeta {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+.leaderboardList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.leaderboardRow {
+  display: grid;
+  grid-template-columns: 20px 24px 1fr auto;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.leaderboardRowCurrent {
+  background: rgba(32, 168, 58, 0.16);
+  border-radius: 999px;
+  padding: 3px 6px;
+  margin: -3px -6px;
+}
+
+.leaderboardRank {
+  opacity: 0.65;
+  text-align: right;
+}
+
+.leaderboardAvatar,
+.leaderboardAvatarFallback {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  object-fit: cover;
+  background: rgba(255, 250, 240, 0.9);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.leaderboardName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboardScore {
+  font-variant-numeric: tabular-nums;
+}

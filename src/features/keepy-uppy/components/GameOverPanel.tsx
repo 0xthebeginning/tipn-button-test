@@ -6,19 +6,30 @@ import styles from './KeepyUppy.module.css';
 import { BACK_TO_STICKERS_HREF } from './navigation';
 import type { GameSnapshot } from '../types';
 
+export interface LeaderboardEntry {
+  fid: number;
+  username?: string;
+  displayName?: string;
+  pfpUrl?: string;
+  score: number;
+  updatedAt: number;
+}
+
 interface GameOverPanelProps {
   snapshot: GameSnapshot;
+  leaderboard: LeaderboardEntry[];
+  leaderboardStatus: 'idle' | 'loading' | 'ready' | 'error';
+  currentFid?: number;
   onPlayAgain: () => void;
 }
 
-/**
- * End-of-run results card.
- *
- * Share is a placeholder for the future Farcaster share card: today it
- * uses the Web Share API where available and clipboard otherwise. When
- * share cards land, replace `handleShare` with the cast composer call.
- */
-export function GameOverPanel({ snapshot, onPlayAgain }: GameOverPanelProps) {
+export function GameOverPanel({
+  snapshot,
+  leaderboard,
+  leaderboardStatus,
+  currentFid,
+  onPlayAgain,
+}: GameOverPanelProps) {
   const [shared, setShared] = useState(false);
 
   const handleShare = useCallback(async () => {
@@ -34,7 +45,7 @@ export function GameOverPanel({ snapshot, onPlayAgain }: GameOverPanelProps) {
         setTimeout(() => setShared(false), 1500);
       }
     } catch {
-      // User dismissed the share sheet — nothing to do.
+      // User dismissed the share sheet.
     }
   }, [snapshot.score]);
 
@@ -48,6 +59,45 @@ export function GameOverPanel({ snapshot, onPlayAgain }: GameOverPanelProps) {
         ) : (
           <span className={styles.bestLine}>Best {snapshot.best}</span>
         )}
+
+        <div className={styles.leaderboard}>
+          <div className={styles.leaderboardTitle}>Leaderboard</div>
+          {leaderboardStatus === 'loading' && (
+            <div className={styles.leaderboardMeta}>Syncing score…</div>
+          )}
+          {leaderboardStatus === 'error' && (
+            <div className={styles.leaderboardMeta}>Leaderboard unavailable</div>
+          )}
+          {leaderboardStatus !== 'loading' && leaderboard.length === 0 && (
+            <div className={styles.leaderboardMeta}>No scores yet</div>
+          )}
+          {leaderboard.length > 0 && (
+            <ol className={styles.leaderboardList}>
+              {leaderboard.slice(0, 10).map((entry, index) => {
+                const name = entry.displayName || entry.username || `FID ${entry.fid}`;
+                const isCurrent = currentFid === entry.fid;
+                return (
+                  <li
+                    key={entry.fid}
+                    className={`${styles.leaderboardRow} ${
+                      isCurrent ? styles.leaderboardRowCurrent : ''
+                    }`}
+                  >
+                    <span className={styles.leaderboardRank}>{index + 1}</span>
+                    {entry.pfpUrl ? (
+                      <img src={entry.pfpUrl} alt="" className={styles.leaderboardAvatar} />
+                    ) : (
+                      <span className={styles.leaderboardAvatarFallback}>🐕</span>
+                    )}
+                    <span className={styles.leaderboardName}>{name}</span>
+                    <span className={styles.leaderboardScore}>{entry.score}</span>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </div>
+
         <div className={styles.buttons}>
           <button
             type="button"
