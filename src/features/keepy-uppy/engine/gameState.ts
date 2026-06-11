@@ -8,6 +8,7 @@ import {
   COZY_ASSIST_FROM_Y_FRACTION,
   COZY_ASSIST_PULL,
   DOG_HOP_DURATION,
+  DOG_WIDTH,
   DRIFT_STEP_PER_10_POINTS,
   GRAVITY_STEP_PER_10_POINTS,
   GROUND_HEIGHT,
@@ -79,6 +80,7 @@ export function createInitialState(): GameState {
     elapsed: 0,
     hitCooldown: 0,
     idlePhase: 0,
+    dogX: bounds.width / 2,
     dogHop: 0,
     shake: 0,
   };
@@ -91,6 +93,7 @@ export function startGame(state: GameState): void {
   state.streak = 0;
   state.elapsed = 0;
   state.hitCooldown = 0;
+  state.dogX = state.bounds.width / 2;
   state.shake = 0;
   state.status = 'playing';
 }
@@ -118,6 +121,7 @@ export function tick(state: GameState, dt: number): GameEvent[] {
     // Gentle floating preview: a sine bob, no real physics.
     state.idlePhase += dt;
     ball.x = bounds.width / 2;
+    state.dogX = ball.x;
     ball.y =
       bounds.height * BALL_SPAWN_Y_FRACTION +
       Math.sin(state.idlePhase * 1.8) * 14;
@@ -138,6 +142,10 @@ export function tick(state: GameState, dt: number): GameEvent[] {
 
   clampDrift(ball, maxDriftForScore(state.score));
   events.push(...stepBall(ball, gravityForScore(state.score), dt, bounds));
+
+  // Keep controls one-button: Super Inu automatically lines up under the ball.
+  const dogHalfWidth = DOG_WIDTH / 2;
+  state.dogX = Math.max(dogHalfWidth, Math.min(bounds.width - dogHalfWidth, ball.x));
 
   if (hasHitGround(ball, bounds)) {
     ball.y = bounds.groundY - ball.radius;
@@ -177,7 +185,7 @@ export function attemptHit(state: GameState, tapX: number): GameEvent[] {
   const { ball, bounds } = state;
   state.dogHop = 1; // Super Inu always tries — little hop on every tap
 
-  if (state.hitCooldown > 0 || !isBallInHitZone(ball, bounds)) {
+  if (state.hitCooldown > 0 || !isBallInHitZone(ball, bounds, state.dogX)) {
     return [{ type: 'miss', x: tapX, y: ball.y }];
   }
 

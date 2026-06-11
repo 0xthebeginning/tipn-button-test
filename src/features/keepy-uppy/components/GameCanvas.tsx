@@ -361,8 +361,8 @@ function drawHitZoneGlow(
   state: GameState,
 ): void {
   if (state.status !== "playing") return;
-  const hitPoint = getHitPoint(state.bounds);
-  const active = isBallInHitZone(state.ball, state.bounds);
+  const hitPoint = getHitPoint(state.bounds, state.dogX);
+  const active = isBallInHitZone(state.ball, state.bounds, state.dogX);
   const glow = ctx.createRadialGradient(
     hitPoint.x,
     hitPoint.y,
@@ -403,7 +403,7 @@ function drawDog(
   sprite: HTMLImageElement | null,
 ): void {
   const { bounds } = state;
-  const cx = bounds.width / 2;
+  const cx = state.dogX;
   const groundY = bounds.groundY;
   const hop = Math.sin(state.dogHop * Math.PI) * 16; // little jump on taps
   const baseY = groundY - hop;

@@ -44,6 +44,8 @@ export interface GameState {
   hitCooldown: number;
   /** Idle-mode bob phase, so the preview ball floats gently. */
   idlePhase: number;
+  /** Horizontal position of Super Inu. Tracks the ball so taps stay one-button. */
+  dogX: number;
   /** Countdown driving the dog's little hop animation. */
   dogHop: number;
   /** Countdown driving game-over screen shake. */
