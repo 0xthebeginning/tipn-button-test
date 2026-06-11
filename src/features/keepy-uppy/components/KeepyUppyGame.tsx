@@ -32,6 +32,36 @@ export function KeepyUppyGame() {
     setLeaderboard(Array.isArray(data.leaderboard) ? data.leaderboard : []);
   }, []);
 
+
+  useEffect(() => {
+    const fid = context?.user?.fid;
+    if (!fid) return;
+
+    let cancelled = false;
+
+    async function hydrateBestFromServer() {
+      try {
+        const res = await fetch(`/api/keepy-uppy/score?fid=${fid}`, { cache: 'no-store' });
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const serverBest = data.entry?.score;
+
+        if (!cancelled && Number.isFinite(serverBest)) {
+          canvasHandle.current?.setBest(serverBest);
+        }
+      } catch (error) {
+        console.error('Failed to hydrate keepy-uppy best score:', error);
+      }
+    }
+
+    hydrateBestFromServer();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [context?.user?.fid]);
+
   useEffect(() => {
     if (snapshot.status !== 'gameOver') return;
 

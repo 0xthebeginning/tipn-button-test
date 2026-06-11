@@ -94,6 +94,16 @@ export async function submitKeepyUppyScore(
   return normalized;
 }
 
+export async function getKeepyUppyScore(
+  fid: number
+): Promise<KeepyUppyLeaderboardEntry | null> {
+  if (redis) {
+    return await redis.get<KeepyUppyLeaderboardEntry>(getKeepyUppyUserKey(fid));
+  }
+
+  return keepyUppyLocalScores.get(fid) ?? null;
+}
+
 export async function getKeepyUppyLeaderboard(
   limit = 10
 ): Promise<KeepyUppyLeaderboardEntry[]> {

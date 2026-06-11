@@ -1,5 +1,23 @@
 import { NextResponse } from 'next/server';
-import { submitKeepyUppyScore } from '~/lib/kv';
+import { getKeepyUppyScore, submitKeepyUppyScore } from '~/lib/kv';
+
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const fid = Number(searchParams.get('fid'));
+
+  if (!Number.isInteger(fid) || fid <= 0) {
+    return NextResponse.json({ error: 'Invalid fid' }, { status: 400 });
+  }
+
+  try {
+    const entry = await getKeepyUppyScore(fid);
+    return NextResponse.json({ entry });
+  } catch (error) {
+    console.error('Failed to fetch keepy-uppy score:', error);
+    return NextResponse.json({ error: 'Failed to fetch score' }, { status: 500 });
+  }
+}
 
 export async function POST(request: Request) {
   try {

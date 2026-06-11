@@ -91,6 +91,8 @@ const SPARKLE_LIFETIME = 0.6;
 export interface GameCanvasHandle {
   /** Begin a fresh run (used by the game-over panel's Play Again). */
   start: () => void;
+  /** Hydrate best score from server-backed leaderboard. */
+  setBest: (best: number) => void;
 }
 
 interface GameCanvasProps {
@@ -223,6 +225,10 @@ export function GameCanvas({ onSnapshot, ref }: GameCanvasProps) {
       start: () => {
         isNewBestRef.current = false;
         startGame(stateRef.current);
+        emitSnapshot();
+      },
+      setBest: (best: number) => {
+        stateRef.current.best = Math.max(0, Math.floor(best));
         emitSnapshot();
       },
     }),
