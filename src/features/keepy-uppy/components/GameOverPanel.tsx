@@ -100,11 +100,7 @@ export function GameOverPanel({
 Think you can beat me?
 
 https://superinu-miniapp.vercel.app/keepy-uppy`,
-              embeds: [
-                {
-                  path: '/keepy-uppy',
-                },
-              ],
+
             }}
           />
         </div>
