@@ -4,7 +4,7 @@ import { getMiniAppEmbedMetadata } from '~/lib/utils';
 
 const KEEPY_UPPY_URL = 'https://superinu-miniapp.vercel.app/keepy-uppy';
 const KEEPY_UPPY_OG_IMAGE =
-  'https://superinu-miniapp.vercel.app/keepy-uppy/opengraph-image';
+  'https://superinu-miniapp.vercel.app/keepy-uppy/opengraph-image.png';
 
 export const metadata: Metadata = {
   title: 'Superinu Keepy-Uppy',
