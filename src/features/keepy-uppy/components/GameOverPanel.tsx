@@ -97,7 +97,9 @@ export function GameOverPanel({
             cast={{
               text: `⚽🐕 I got ${snapshot.score} in $Superinu Keepy-Uppy.
 
-Think you can beat me?`,
+Think you can beat me?
+
+https://superinu-miniapp.vercel.app/keepy-uppy`,
               embeds: [
                 {
                   path: '/keepy-uppy',
