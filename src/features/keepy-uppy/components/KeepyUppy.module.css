@@ -1,0 +1,267 @@
+/*
+ * Scoped styles for Keepy-Uppy. CSS module on purpose: nothing here can
+ * leak into (or be broken by) the existing sticker app's styles, and the
+ * feature stays portable if it becomes its own miniapp later.
+ */
+
+.screen {
+  --kuy-ink: #4a3527;
+  --kuy-cream: #fff4e2;
+  --kuy-paper: #fffaf0;
+  --kuy-orange: #e8923a;
+  --kuy-coral: #ff7b5c;
+  --kuy-sky: #ffe9c9;
+  --kuy-font: ui-rounded, 'SF Pro Rounded', 'Nunito', 'Quicksand', system-ui,
+    sans-serif;
+
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--kuy-sky);
+  font-family: var(--kuy-font);
+  color: var(--kuy-ink);
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* The playfield keeps the logical 390:640 aspect and letterboxes the rest. */
+.playfield {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: calc(100vh * (390 / 640));
+  max-height: calc(100vw * (640 / 390));
+  margin: auto;
+  overflow: hidden;
+}
+
+@media (min-width: 480px) {
+  .playfield {
+    max-width: 430px;
+    max-height: 706px;
+    border-radius: 24px;
+    box-shadow: 0 18px 50px rgba(74, 53, 39, 0.22);
+  }
+}
+
+/* ---------- HUD ---------- */
+
+.hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: calc(12px + env(safe-area-inset-top)) 14px 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.backLink {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 250, 240, 0.85);
+  color: var(--kuy-ink);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(74, 53, 39, 0.15);
+}
+
+.backLink:focus-visible,
+.button:focus-visible {
+  outline: 3px solid var(--kuy-coral);
+  outline-offset: 2px;
+}
+
+.scoreBox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.score {
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow:
+    0 2px 0 rgba(255, 250, 240, 0.9),
+    0 4px 12px rgba(74, 53, 39, 0.15);
+  font-variant-numeric: tabular-nums;
+}
+
+.best {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 250, 240, 0.85);
+  box-shadow: 0 2px 8px rgba(74, 53, 39, 0.12);
+}
+
+/* ---------- Panels (idle / game over) ---------- */
+
+.panel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  padding: 24px;
+  z-index: 3;
+}
+
+/* Idle panel lets taps fall through to the canvas: tap anywhere to start. */
+.panelPassthrough {
+  pointer-events: none;
+}
+
+.panelCard {
+  pointer-events: auto;
+  background: var(--kuy-paper);
+  border: 3px solid var(--kuy-ink);
+  border-radius: 28px;
+  box-shadow: 0 10px 0 rgba(74, 53, 39, 0.18);
+  padding: 26px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: 300px;
+  width: 100%;
+}
+
+.title {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  line-height: 1.15;
+  text-shadow:
+    0 2px 0 rgba(255, 250, 240, 0.9),
+    0 6px 16px rgba(74, 53, 39, 0.18);
+}
+
+.titleAccent {
+  color: var(--kuy-coral);
+  display: block;
+  font-size: 36px;
+}
+
+.tapToStart {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--kuy-ink);
+  background: rgba(255, 250, 240, 0.9);
+  border-radius: 999px;
+  padding: 10px 22px;
+  box-shadow: 0 4px 14px rgba(74, 53, 39, 0.16);
+  animation: kuyPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes kuyPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.07);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tapToStart {
+    animation: none;
+  }
+}
+
+.hint {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.75;
+  max-width: 240px;
+}
+
+.gameOverLabel {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.finalScore {
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--kuy-coral);
+  font-variant-numeric: tabular-nums;
+}
+
+.bestLine {
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.newBest {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--kuy-orange);
+}
+
+/* ---------- Buttons ---------- */
+
+.buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.button {
+  appearance: none;
+  border: 3px solid var(--kuy-ink);
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-family: var(--kuy-font);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--kuy-ink);
+  background: var(--kuy-cream);
+  cursor: pointer;
+  box-shadow: 0 4px 0 rgba(74, 53, 39, 0.25);
+  transition: transform 80ms ease, box-shadow 80ms ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 rgba(74, 53, 39, 0.25);
+}
+
+.buttonPrimary {
+  background: var(--kuy-coral);
+  color: #fffaf0;
+}
+
+.buttonGhost {
+  background: transparent;
+  border-color: rgba(74, 53, 39, 0.35);
+  box-shadow: none;
+  font-weight: 700;
+}
