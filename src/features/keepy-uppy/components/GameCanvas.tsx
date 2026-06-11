@@ -39,16 +39,16 @@ const COLORS = {
   grass: "#9ccb86",
   grassDark: "#7fb56c",
   dirt: "#d9a86a",
-  inuOrange: "#e8923a",
-  inuOrangeDark: "#d07f2c",
-  inuCream: "#fff4e2",
-  inuLine: "#4a3527",
+  inuOrange: "#58c847",
+  inuOrangeDark: "#2f8f35",
+  inuCream: "#d8ffd1",
+  inuLine: "#103f22",
   ballWhite: "#fffdf6",
   ballPatch: "#4a3b32",
   ballLine: "#e8ddcc",
-  boop: "#ff7b5c",
+  boop: "#20a83a",
   glow: "rgba(255, 200, 120, 0.0)",
-  glowActive: "rgba(255, 183, 90, 0.35)",
+  glowActive: "rgba(88, 200, 71, 0.42)",
 } as const;
 
 /* ================================================================== */
