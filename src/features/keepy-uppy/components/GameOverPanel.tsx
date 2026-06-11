@@ -33,9 +33,11 @@ export function GameOverPanel({
   const [shared, setShared] = useState(false);
 
   const handleShare = useCallback(async () => {
-    const text = `I kept the ball up ${snapshot.score} time${
-      snapshot.score === 1 ? '' : 's'
-    } in Superinu Keepy-Uppy! ⚽🐕 Can you beat my score?`;
+    const text = `⚽🐕 I got ${snapshot.score} in $Superinu Keepy-Uppy.
+
+Think you can beat me?
+
+play: https://superinu-miniapp.vercel.app/keepy-uppy`;
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
         await navigator.share({ text });
