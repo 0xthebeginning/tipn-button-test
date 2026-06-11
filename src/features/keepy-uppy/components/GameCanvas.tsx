@@ -33,12 +33,12 @@ import type { Ball, GameEvent, GameSnapshot, GameState } from "../types";
 /* ================================================================== */
 
 const COLORS = {
-  skyTop: "#7ed7ff",
-  skyBottom: "#dfffd7",
-  cloud: "rgba(255, 255, 245, 0.82)",
-  grass: "#63c64f",
-  grassDark: "#3ea63d",
-  dirt: "#2f8f35",
+  skyTop: "#ffe9c9",
+  skyBottom: "#ffd9b8",
+  cloud: "rgba(255, 250, 240, 0.85)",
+  grass: "#9ccb86",
+  grassDark: "#7fb56c",
+  dirt: "#d9a86a",
   inuOrange: "#58c847",
   inuOrangeDark: "#2f8f35",
   inuCream: "#d8ffd1",
@@ -331,73 +331,15 @@ function draw(
 function drawSky(ctx: CanvasRenderingContext2D, t: number): void {
   const sky = ctx.createLinearGradient(0, 0, 0, LOGICAL_HEIGHT);
   sky.addColorStop(0, COLORS.skyTop);
-  sky.addColorStop(0.58, "#b9f1ff");
   sky.addColorStop(1, COLORS.skyBottom);
   ctx.fillStyle = sky;
   ctx.fillRect(-20, -20, LOGICAL_WIDTH + 40, LOGICAL_HEIGHT + 40);
 
-  // Soft drifting clouds.
+  // Two soft clouds drifting very slowly.
   ctx.fillStyle = COLORS.cloud;
   const drift = (t * 6) % (LOGICAL_WIDTH + 220);
-  drawCloud(ctx, drift - 130, 76, 0.9);
-  drawCloud(ctx, LOGICAL_WIDTH - drift * 0.55 + 55, 142, 0.65);
-
-  // Stadium bowl.
-  ctx.save();
-  ctx.fillStyle = "rgba(16, 63, 34, 0.16)";
-  ctx.beginPath();
-  ctx.ellipse(LOGICAL_WIDTH / 2, 430, 260, 118, 0, Math.PI, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "rgba(16, 63, 34, 0.30)";
-  ctx.beginPath();
-  ctx.ellipse(LOGICAL_WIDTH / 2, 438, 232, 86, 0, Math.PI, Math.PI * 2);
-  ctx.fill();
-
-  // Crowd dots, deterministic wave pattern.
-  for (let row = 0; row < 5; row++) {
-    for (let x = 22; x < LOGICAL_WIDTH; x += 16) {
-      const y = 350 + row * 13 + Math.sin((x + row * 31) * 0.09) * 4;
-      ctx.fillStyle = row % 2 === 0 ? "rgba(216,255,209,0.55)" : "rgba(88,200,71,0.50)";
-      ctx.beginPath();
-      ctx.arc(x, y, 2.4, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  // Stadium banners.
-  ctx.fillStyle = "rgba(16,63,34,0.72)";
-  roundedBlob(ctx, 20, 395, 84, 22, 8);
-  ctx.fill();
-  roundedBlob(ctx, LOGICAL_WIDTH - 104, 395, 84, 22, 8);
-  ctx.fill();
-
-  ctx.fillStyle = "#d8ffd1";
-  ctx.font = "800 11px ui-rounded, 'SF Pro Rounded', system-ui, sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText("SUPER INU", 62, 410);
-  ctx.fillText("$INU", LOGICAL_WIDTH - 62, 410);
-
-  // Floodlights.
-  ctx.strokeStyle = "rgba(16,63,34,0.35)";
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.moveTo(44, 318);
-  ctx.lineTo(22, 250);
-  ctx.moveTo(LOGICAL_WIDTH - 44, 318);
-  ctx.lineTo(LOGICAL_WIDTH - 22, 250);
-  ctx.stroke();
-
-  ctx.fillStyle = "rgba(255,255,245,0.75)";
-  for (const x of [22, LOGICAL_WIDTH - 22]) {
-    for (let i = 0; i < 6; i++) {
-      ctx.beginPath();
-      ctx.arc(x + (i % 3 - 1) * 7, 245 + Math.floor(i / 3) * 7, 3.2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  ctx.restore();
+  drawCloud(ctx, drift - 110, 86, 1);
+  drawCloud(ctx, LOGICAL_WIDTH - drift * 0.6 + 60, 170, 0.7);
 }
 
 function drawCloud(
@@ -439,50 +381,15 @@ function drawHitZoneGlow(
 
 function drawGround(ctx: CanvasRenderingContext2D, state: GameState): void {
   const { groundY, width, height } = state.bounds;
-
-  // Soccer pitch behind the playable grass strip.
-  const fieldTop = groundY - 120;
-  const field = ctx.createLinearGradient(0, fieldTop, 0, height);
-  field.addColorStop(0, "#7ee05f");
-  field.addColorStop(1, "#3da943");
-  ctx.fillStyle = field;
-  ctx.fillRect(-20, fieldTop, width + 40, height - fieldTop + 20);
-
-  // Mowed field stripes.
-  for (let x = -40; x < width + 80; x += 58) {
-    ctx.fillStyle = "rgba(255,255,255,0.07)";
-    ctx.beginPath();
-    ctx.moveTo(x, fieldTop);
-    ctx.lineTo(x + 34, fieldTop);
-    ctx.lineTo(x + 98, height + 20);
-    ctx.lineTo(x + 64, height + 20);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  // Soccer markings.
-  ctx.strokeStyle = "rgba(255,255,245,0.65)";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(width / 2, groundY - 42, 54, Math.PI, Math.PI * 2);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(width / 2, fieldTop + 12);
-  ctx.lineTo(width / 2, groundY + 18);
-  ctx.stroke();
-
-  ctx.strokeStyle = "rgba(255,255,245,0.45)";
-  ctx.strokeRect(width / 2 - 58, groundY - 104, 116, 46);
-
-  // Actual collision ground line: keep this visually clear.
+  ctx.fillStyle = COLORS.dirt;
+  ctx.fillRect(-20, groundY, width + 40, height - groundY + 20);
   ctx.fillStyle = COLORS.grass;
-  ctx.fillRect(-20, groundY, width + 40, 28);
-
+  ctx.fillRect(-20, groundY, width + 40, 26);
+  // Scalloped grass edge.
   ctx.fillStyle = COLORS.grassDark;
   for (let x = 0; x < width + 20; x += 26) {
     ctx.beginPath();
-    ctx.arc(x, groundY + 28, 9, 0, Math.PI);
+    ctx.arc(x, groundY + 26, 9, 0, Math.PI);
     ctx.fill();
   }
 }
