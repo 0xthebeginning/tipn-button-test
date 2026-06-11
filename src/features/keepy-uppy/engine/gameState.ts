@@ -143,7 +143,7 @@ export function tick(state: GameState, dt: number): GameEvent[] {
   clampDrift(ball, maxDriftForScore(state.score));
   events.push(...stepBall(ball, gravityForScore(state.score), dt, bounds));
 
-  // Keep controls one-button: Super Inu automatically lines up under the ball.
+  // Keep controls one-button: Superinu automatically lines up under the ball.
   const dogHalfWidth = DOG_WIDTH / 2;
   state.dogX = Math.max(dogHalfWidth, Math.min(bounds.width - dogHalfWidth, ball.x));
 
@@ -183,7 +183,7 @@ export function attemptHit(state: GameState, tapX: number): GameEvent[] {
   if (state.status !== 'playing') return [];
 
   const { ball, bounds } = state;
-  state.dogHop = 1; // Super Inu always tries — little hop on every tap
+  state.dogHop = 1; // Superinu always tries — little hop on every tap
 
   if (state.hitCooldown > 0 || !isBallInHitZone(ball, bounds, state.dogX)) {
     return [{ type: 'miss', x: tapX, y: ball.y }];

@@ -16,11 +16,11 @@ export function StartPanel({ snapshot }: StartPanelProps) {
   return (
     <div className={`${styles.panel} ${styles.panelPassthrough}`}>
       <h1 className={styles.title}>
-        Super Inu
+        Superinu
         <span className={styles.titleAccent}>Keepy-Uppy</span>
       </h1>
       <p className={styles.hint}>
-        Keep the ball off the grass. Tap when it drops near Super Inu —
+        Keep the ball off the grass. Tap when it drops near Superinu —
         boop it back up!
       </p>
       <div className={styles.tapToStart}>Tap to Start</div>

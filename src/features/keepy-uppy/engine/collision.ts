@@ -1,7 +1,7 @@
 import { HIT_POINT_ABOVE_GROUND, HIT_RADIUS } from './constants';
 import type { Ball, Bounds, Vec2 } from '../types';
 
-/** The point Super Inu boops from — just above the head, bottom center. */
+/** The point Superinu boops from — just above the head, bottom center. */
 export function getHitPoint(bounds: Bounds, dogX = bounds.width / 2): Vec2 {
   return {
     x: dogX,

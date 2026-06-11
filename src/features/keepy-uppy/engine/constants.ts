@@ -52,7 +52,7 @@ export const COZY_ASSIST_FROM_Y_FRACTION = 0.45;
 /** Dog placement (relative to ground line) */
 export const DOG_WIDTH = 132;
 export const DOG_HEIGHT = 128;
-/** The hit point floats just above Super Inu's head. */
+/** The hit point floats just above Superinu's head. */
 export const HIT_POINT_ABOVE_GROUND = 142;
 
 /** Juice timings (seconds) */
@@ -72,7 +72,7 @@ export const BEST_SCORE_STORAGE_KEY = 'super-inu-keepy-uppy:best';
  * Asset paths — isolated here so swapping in real art is a one-line change.
  * Drop the real sticker at `public/assets/keepy-uppy/super-inu.png` in the
  * repo and it will be used automatically; until then the renderer draws a
- * built-in vector Super Inu so the game works with zero binary assets.
+ * built-in vector Superinu so the game works with zero binary assets.
  */
 export const ASSET_PATHS = {
   superInu: '/assets/keepy-uppy/super-inu.png',

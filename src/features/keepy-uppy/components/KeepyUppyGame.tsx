@@ -22,7 +22,7 @@ const INITIAL_SNAPSHOT: GameSnapshot = {
  * snapshot that drives the HUD and the idle / game-over panels.
  *
  * Self-contained on purpose: the /keepy-uppy route just renders this,
- * and the rest of the Super Inu miniapp never imports anything deeper.
+ * and the rest of the Superinu miniapp never imports anything deeper.
  */
 export function KeepyUppyGame() {
   const [snapshot, setSnapshot] = useState<GameSnapshot>(INITIAL_SNAPSHOT);

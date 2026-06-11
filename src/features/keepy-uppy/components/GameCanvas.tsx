@@ -29,7 +29,7 @@ import { useInput } from "../hooks/useInput";
 import type { Ball, GameEvent, GameSnapshot, GameState } from "../types";
 
 /* ================================================================== */
-/* Palette — warm, cozy, Super Inu colors                              */
+/* Palette — warm, cozy, Superinu colors                              */
 /* ================================================================== */
 
 const COLORS = {
@@ -131,7 +131,7 @@ export function GameCanvas({ onSnapshot, ref }: GameCanvasProps) {
     ).matches;
 
     // Optional art: if the real sticker PNGs exist in /public they are
-    // used; otherwise the built-in vector Super Inu below draws instead.
+    // used; otherwise the built-in vector Superinu below draws instead.
     const tryLoad = (src: string, key: "dog" | "ball") => {
       const img = new Image();
       img.onload = () => {
@@ -268,7 +268,7 @@ export function GameCanvas({ onSnapshot, ref }: GameCanvasProps) {
     <div
       ref={wrapperRef}
       role="application"
-      aria-label="Super Inu Keepy-Uppy game. Tap or press space to bounce the ball."
+      aria-label="Superinu Keepy-Uppy game. Tap or press space to bounce the ball."
       tabIndex={0}
       onKeyDown={handleKeyDown}
       style={{
@@ -355,7 +355,7 @@ function drawCloud(
   ctx.fill();
 }
 
-/** Soft halo over Super Inu that brightens when the ball is boopable. */
+/** Soft halo over Superinu that brightens when the ball is boopable. */
 function drawHitZoneGlow(
   ctx: CanvasRenderingContext2D,
   state: GameState,
@@ -394,7 +394,7 @@ function drawGround(ctx: CanvasRenderingContext2D, state: GameState): void {
   }
 }
 
-/* ----- Super Inu (vector fallback, swapped for the PNG if present) --- */
+/* ----- Superinu (vector fallback, swapped for the PNG if present) --- */
 
 function drawDog(
   ctx: CanvasRenderingContext2D,

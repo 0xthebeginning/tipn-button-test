@@ -24,7 +24,7 @@ export function GameOverPanel({ snapshot, onPlayAgain }: GameOverPanelProps) {
   const handleShare = useCallback(async () => {
     const text = `I kept the ball up ${snapshot.score} time${
       snapshot.score === 1 ? '' : 's'
-    } in Super Inu Keepy-Uppy! ⚽🐕 Can you beat my score?`;
+    } in Superinu Keepy-Uppy! ⚽🐕 Can you beat my score?`;
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
         await navigator.share({ text });

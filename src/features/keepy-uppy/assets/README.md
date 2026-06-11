@@ -1,7 +1,7 @@
 # Keepy-Uppy assets
 
 The MVP ships with **zero binary assets**: GameCanvas draws a built-in
-vector Super Inu and soccer ball, so the game runs immediately.
+vector Superinu and soccer ball, so the game runs immediately.
 
 To swap in real art, drop PNGs at these paths in the repo's `public/`
 directory (paths are defined in `../engine/constants.ts` → `ASSET_PATHS`):
