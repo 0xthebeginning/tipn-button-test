@@ -320,6 +320,7 @@ function draw(
   }
 
   drawSky(ctx, juice.time);
+  drawBackgroundGoals(ctx, state);
   drawHitZoneGlow(ctx, state);
   drawGround(ctx, state);
   drawDog(ctx, state, juice, sprites.dog);
@@ -355,6 +356,76 @@ function drawCloud(
   ctx.fill();
 }
 
+function drawBackgroundGoals(
+  ctx: CanvasRenderingContext2D,
+  state: GameState,
+): void {
+  const { groundY, width } = state.bounds;
+  const horizonY = groundY - 118;
+  const goalY = groundY - 72;
+
+  ctx.save();
+
+  // Distant field horizon behind the dog.
+  ctx.strokeStyle = "rgba(16, 63, 34, 0.18)";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(24, horizonY);
+  ctx.quadraticCurveTo(width / 2, horizonY - 16, width - 24, horizonY);
+  ctx.stroke();
+
+  // Left and right goals, in the background.
+  const drawGoal = (x: number, flip: number) => {
+    ctx.save();
+    ctx.translate(x, goalY);
+    ctx.scale(flip, 1);
+
+    ctx.strokeStyle = "rgba(255, 255, 245, 0.78)";
+    ctx.lineWidth = 4;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    // Goal frame.
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, -46);
+    ctx.lineTo(62, -46);
+    ctx.lineTo(62, 0);
+    ctx.stroke();
+
+    // Net depth.
+    ctx.strokeStyle = "rgba(255, 255, 245, 0.38)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(62, -46);
+    ctx.lineTo(78, -34);
+    ctx.lineTo(78, 8);
+    ctx.lineTo(62, 0);
+    ctx.stroke();
+
+    // Net lines.
+    for (let gx = 14; gx < 62; gx += 16) {
+      ctx.beginPath();
+      ctx.moveTo(gx, -44);
+      ctx.lineTo(gx + 10, 2);
+      ctx.stroke();
+    }
+    for (let gy = -34; gy < 0; gy += 12) {
+      ctx.beginPath();
+      ctx.moveTo(2, gy);
+      ctx.lineTo(74, gy + 8);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  };
+
+  drawGoal(18, 1);
+  drawGoal(width - 18, -1);
+
+  ctx.restore();
+}
+
 /** Soft halo over Super Inu that brightens when the ball is boopable. */
 function drawHitZoneGlow(
   ctx: CanvasRenderingContext2D,
@@ -381,33 +452,11 @@ function drawHitZoneGlow(
 
 function drawGround(ctx: CanvasRenderingContext2D, state: GameState): void {
   const { groundY, width, height } = state.bounds;
-
-  // Soccer pitch below Super Inu.
-  ctx.fillStyle = "#62c957";
+  ctx.fillStyle = COLORS.dirt;
   ctx.fillRect(-20, groundY, width + 40, height - groundY + 20);
-
-  // Mowed field stripes.
-  ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
-  for (let x = -30; x < width + 40; x += 52) {
-    ctx.fillRect(x, groundY, 26, height - groundY + 20);
-  }
-
-  // Soccer field markings, kept subtle so gameplay stays readable.
-  ctx.strokeStyle = "rgba(255, 255, 245, 0.72)";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(width / 2, groundY);
-  ctx.lineTo(width / 2, height + 20);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.arc(width / 2, groundY + 34, 42, 0, Math.PI * 2);
-  ctx.stroke();
-
-  ctx.strokeStyle = "rgba(255, 255, 245, 0.52)";
-  ctx.strokeRect(width / 2 - 72, groundY + 14, 144, 48);
-
-  // Scalloped grass edge stays as the visual collision line.
+  ctx.fillStyle = COLORS.grass;
+  ctx.fillRect(-20, groundY, width + 40, 26);
+  // Scalloped grass edge.
   ctx.fillStyle = COLORS.grassDark;
   for (let x = 0; x < width + 20; x += 26) {
     ctx.beginPath();
