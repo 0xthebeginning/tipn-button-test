@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useState } from 'react';
+import { ShareButton } from '~/components/ui/Share';
 import styles from './KeepyUppy.module.css';
 import { BACK_TO_STICKERS_HREF } from './navigation';
 import type { GameSnapshot } from '../types';
@@ -30,27 +30,6 @@ export function GameOverPanel({
   currentFid,
   onPlayAgain,
 }: GameOverPanelProps) {
-  const [shared, setShared] = useState(false);
-
-  const handleShare = useCallback(async () => {
-    const text = `⚽🐕 I got ${snapshot.score} in $Superinu Keepy-Uppy.
-
-Think you can beat me?
-
-play: https://superinu-miniapp.vercel.app/keepy-uppy`;
-    try {
-      if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ text });
-      } else if (navigator.clipboard) {
-        await navigator.clipboard.writeText(text);
-        setShared(true);
-        setTimeout(() => setShared(false), 1500);
-      }
-    } catch {
-      // User dismissed the share sheet.
-    }
-  }, [snapshot.score]);
-
   return (
     <div className={styles.panel}>
       <div className={styles.panelCard}>
@@ -112,13 +91,21 @@ play: https://superinu-miniapp.vercel.app/keepy-uppy`;
           <Link href={BACK_TO_STICKERS_HREF} className={styles.button}>
             Back to Stickers
           </Link>
-          <button
-            type="button"
+          <ShareButton
+            buttonText="Share Score"
             className={`${styles.button} ${styles.buttonGhost}`}
-            onClick={handleShare}
-          >
-            {shared ? 'Copied!' : 'Share Score'}
-          </button>
+            cast={{
+              text: `⚽🐕 I got ${snapshot.score} in $Superinu Keepy-Uppy.
+
+Think you can beat me?`,
+              embeds: [
+                {
+                  path: '/keepy-uppy',
+                },
+              ],
+              close: false,
+            }}
+          />
         </div>
       </div>
     </div>
