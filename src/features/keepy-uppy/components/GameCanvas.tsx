@@ -381,11 +381,33 @@ function drawHitZoneGlow(
 
 function drawGround(ctx: CanvasRenderingContext2D, state: GameState): void {
   const { groundY, width, height } = state.bounds;
-  ctx.fillStyle = COLORS.dirt;
+
+  // Soccer pitch below Super Inu.
+  ctx.fillStyle = "#62c957";
   ctx.fillRect(-20, groundY, width + 40, height - groundY + 20);
-  ctx.fillStyle = COLORS.grass;
-  ctx.fillRect(-20, groundY, width + 40, 26);
-  // Scalloped grass edge.
+
+  // Mowed field stripes.
+  ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+  for (let x = -30; x < width + 40; x += 52) {
+    ctx.fillRect(x, groundY, 26, height - groundY + 20);
+  }
+
+  // Soccer field markings, kept subtle so gameplay stays readable.
+  ctx.strokeStyle = "rgba(255, 255, 245, 0.72)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(width / 2, groundY);
+  ctx.lineTo(width / 2, height + 20);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(width / 2, groundY + 34, 42, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.strokeStyle = "rgba(255, 255, 245, 0.52)";
+  ctx.strokeRect(width / 2 - 72, groundY + 14, 144, 48);
+
+  // Scalloped grass edge stays as the visual collision line.
   ctx.fillStyle = COLORS.grassDark;
   for (let x = 0; x < width + 20; x += 26) {
     ctx.beginPath();
