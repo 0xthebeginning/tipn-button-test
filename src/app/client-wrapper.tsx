@@ -1,6 +1,8 @@
 // src/app/client-wrapper.tsx
 'use client';
 
+import { usePathname } from 'next/navigation';
+
 import { useMemo } from 'react';
 import { MiniAppProvider } from '@neynar/react';
 import '@neynar/react/dist/style.css';
@@ -66,12 +68,16 @@ function ConnectWalletButton() {
 
 export default function ClientWrapper({ children }: { children: React.ReactNode }) {
   const queryClient = useMemo(() => new QueryClient(), []);
+  const pathname = usePathname();
+  const hideAppChrome = pathname?.startsWith("/keepy-uppy");
 
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <MiniAppProvider analyticsEnabled={false}>
-          {/* Top-right: dark mode toggle */}
+          {!hideAppChrome && (
+            <>
+            {/* Top-right: dark mode toggle */}
           <div className="fixed top-4 right-4 z-50">
             <DarkModeToggle />
           </div>
@@ -80,6 +86,8 @@ export default function ClientWrapper({ children }: { children: React.ReactNode 
           <div className="fixed top-4 left-4 z-50">
             <ConnectWalletButton />
           </div>
+            </>
+          )}
 
           {children}
         </MiniAppProvider>
