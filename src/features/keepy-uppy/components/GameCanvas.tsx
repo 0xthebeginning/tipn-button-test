@@ -33,9 +33,9 @@ import type { Ball, GameEvent, GameSnapshot, GameState } from "../types";
 /* ================================================================== */
 
 const COLORS = {
-  skyTop: "#ffe9c9",
-  skyBottom: "#ffd9b8",
-  cloud: "rgba(255, 250, 240, 0.85)",
+  skyTop: "#8fdcff",
+  skyBottom: "#dfffd7",
+  cloud: "rgba(255, 255, 245, 0.86)",
   grass: "#9ccb86",
   grassDark: "#7fb56c",
   dirt: "#d9a86a",
