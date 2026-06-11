@@ -103,7 +103,6 @@ Think you can beat me?`,
                   path: '/keepy-uppy',
                 },
               ],
-              close: false,
             }}
           />
         </div>
