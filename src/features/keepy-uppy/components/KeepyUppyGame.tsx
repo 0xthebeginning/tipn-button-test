@@ -53,7 +53,7 @@ export function KeepyUppyGame() {
               username: context.user.username,
               displayName: context.user.displayName,
               pfpUrl: context.user.pfpUrl,
-              score: snapshot.score,
+              score: Math.max(snapshot.score, snapshot.best),
             }),
           });
         }
