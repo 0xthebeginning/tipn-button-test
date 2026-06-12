@@ -340,3 +340,81 @@
 .leaderboardScore {
   font-variant-numeric: tabular-nums;
 }
+
+/* Compact game-over layout for Farcaster mobile frames. */
+@media (max-height: 760px), (max-width: 480px) {
+  .panel {
+    justify-content: flex-start;
+    padding: calc(10px + env(safe-area-inset-top)) 18px calc(10px + env(safe-area-inset-bottom));
+  }
+
+  .panelCard {
+    max-height: calc(100% - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    overflow-y: auto;
+    padding: 14px 18px 16px;
+    gap: 8px;
+    border-radius: 24px;
+  }
+
+  .gameOverLabel {
+    font-size: 20px;
+  }
+
+  .finalScore {
+    font-size: 44px;
+  }
+
+  .bestLine,
+  .newBest {
+    font-size: 13px;
+  }
+
+  .leaderboard {
+    width: 100%;
+    padding: 12px 10px;
+  }
+
+  .leaderboardTitle {
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+
+  .leaderboardList {
+    gap: 3px;
+  }
+
+  .leaderboardRow {
+    grid-template-columns: 26px 32px minmax(0, 1fr) 38px;
+    min-height: 32px;
+    gap: 7px;
+    font-size: 14px;
+  }
+
+  .leaderboardAvatar,
+  .leaderboardAvatarFallback {
+    width: 28px;
+    height: 28px;
+  }
+
+  .leaderboardName {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .buttonPrimary {
+    grid-column: 1 / -1;
+  }
+
+  .button {
+    min-height: 42px;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+}
