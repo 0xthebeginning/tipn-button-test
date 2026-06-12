@@ -41,6 +41,20 @@ export function GameOverPanel({
           <span className={styles.bestLine}>Best {snapshot.best}</span>
         )}
 
+        <div className={styles.shareScoreTop}>
+          <ShareButton
+            buttonText="Share Score"
+            className={`${styles.button} ${styles.buttonGhost}`}
+            cast={{
+              text: `⚽🐕 I got ${snapshot.score} in $Superinu Keepy-Uppy.
+
+Think you can beat me?
+
+https://superinu-miniapp.vercel.app/keepy-uppy`,
+            }}
+          />
+        </div>
+
         <div className={styles.leaderboard}>
           <div className={styles.leaderboardTitle}>Leaderboard</div>
           {leaderboardStatus === 'loading' && (
@@ -91,18 +105,7 @@ export function GameOverPanel({
           <Link href={BACK_TO_STICKERS_HREF} className={styles.button}>
             Back to Stickers
           </Link>
-          <ShareButton
-            buttonText="Share Score"
-            className={`${styles.button} ${styles.buttonGhost}`}
-            cast={{
-              text: `⚽🐕 I got ${snapshot.score} in $Superinu Keepy-Uppy.
 
-Think you can beat me?
-
-https://superinu-miniapp.vercel.app/keepy-uppy`,
-
-            }}
-          />
         </div>
       </div>
     </div>

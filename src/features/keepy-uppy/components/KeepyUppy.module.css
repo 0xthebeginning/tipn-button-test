@@ -418,3 +418,14 @@
     font-size: 14px;
   }
 }
+
+.shareScoreTop {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.shareScoreTop .button {
+  width: 100%;
+  max-width: 220px;
+}
